@@ -20,8 +20,8 @@ class Loader:
     
     def load_names_from_config(self):
         """Load first name and last name from config.txt"""
-        first_name = "Amr"  # Default values
-        last_name = "Salem"
+        first_name = "Awesom"  # Default values
+        last_name = "Gorgeous"
         
         try:
             with open("config.txt", "r") as f:
@@ -51,13 +51,13 @@ class Loader:
         greeting2 = f"Ya {last_name}"
         
         # Calculate positions for 2x sized text
-        x1 = (self.width - len(greeting) * 12) // 2  # 16 pixels wide for 2x text
-        x2 = (self.width - len(greeting2) * 12) // 2
+        x1 = (self.width - len(greeting) * 16) // 2  # 16 pixels wide for 2x text
+        x2 = (self.width - len(greeting2) * 16) // 2
         
         # Animate greeting appearance with larger text
         for i in range(len(greeting)):
             # Clear previous text area
-            self.display.fill_rect(x1, 70, len(greeting) * 8, 20, Color.BLACK)
+            self.display.fill_rect(x1, 70, len(greeting) * 16, 20, Color.BLACK)
             self.draw_large_text(greeting[:i+1], x1, 75, Color.CYAN)
             self.display.display()
             time.sleep_ms(150)
@@ -84,114 +84,28 @@ class Loader:
         self.display.display()
         
     def draw_large_text(self, text, x, y, color):
-        """Draw text at 2x size"""
+        """Draw text at 2x size by drawing each character in a scaled pattern"""
+        char_width = 16  # 2x normal character width for spacing
+        
         for i, char in enumerate(text):
-            char_x = x + i * 16  # Each character is 16 pixels wide (2x8)
+            char_x = x + i * char_width
             
-            # Draw character at 2x scale by drawing 4 pixels for each original pixel
-            # This creates a simple 2x scaling effect
-            for row in range(8):
-                for col in range(8):
-                    # Get pixel from original 8x8 font pattern
-                    # Since we don't have access to the font data, we'll use rectangles
-                    # to approximate larger text
-                    pass
-                    
-            # Simplified approach: draw filled rectangles to form letters
-            if char == 'Y':
-                # Draw Y shape
-                self.display.fill_rect(char_x, y, 4, 8, color)        # Left diagonal
-                self.display.fill_rect(char_x + 12, y, 4, 8, color)   # Right diagonal  
-                self.display.fill_rect(char_x + 4, y + 6, 8, 4, color) # Bottom stem
-                self.display.fill_rect(char_x + 6, y + 10, 4, 6, color) # Bottom
-            elif char == 'a':
-                # Draw lowercase a
-                self.display.fill_rect(char_x + 2, y + 4, 10, 4, color) # Top bar
-                self.display.fill_rect(char_x + 2, y + 8, 4, 8, color)  # Left side
-                self.display.fill_rect(char_x + 8, y + 8, 4, 8, color)  # Right side
-                self.display.fill_rect(char_x + 2, y + 12, 10, 4, color) # Bottom bar
-            elif char == 'A':
-                # Draw uppercase A
-                self.display.fill_rect(char_x + 6, y, 4, 16, color)     # Center stem
-                self.display.fill_rect(char_x + 2, y + 4, 4, 12, color) # Left side
-                self.display.fill_rect(char_x + 10, y + 4, 4, 12, color) # Right side
-                self.display.fill_rect(char_x + 2, y + 8, 12, 4, color) # Cross bar
-            elif char == 'm':
-                # Draw lowercase m
-                self.display.fill_rect(char_x, y + 4, 4, 12, color)     # Left stem
-                self.display.fill_rect(char_x + 4, y + 4, 4, 8, color)  # First arch
-                self.display.fill_rect(char_x + 8, y + 8, 4, 8, color)  # Center
-                self.display.fill_rect(char_x + 12, y + 4, 4, 12, color) # Right stem
-            elif char == 'r':
-                # Draw lowercase r
-                self.display.fill_rect(char_x, y + 4, 4, 12, color)     # Left stem
-                self.display.fill_rect(char_x + 4, y + 4, 8, 4, color)  # Top bar
-            elif char == 'S':
-                # Draw uppercase S
-                self.display.fill_rect(char_x + 2, y, 10, 4, color)     # Top
-                self.display.fill_rect(char_x + 2, y + 6, 10, 4, color) # Middle
-                self.display.fill_rect(char_x + 2, y + 12, 10, 4, color) # Bottom
-                self.display.fill_rect(char_x, y + 4, 4, 4, color)      # Left middle
-                self.display.fill_rect(char_x + 10, y + 8, 4, 4, color) # Right middle
-            elif char == 'l':
-                # Draw lowercase l
-                self.display.fill_rect(char_x + 6, y, 4, 16, color)     # Stem
-            elif char == 'e':
-                # Draw lowercase e
-                self.display.fill_rect(char_x + 2, y + 4, 10, 4, color) # Top
-                self.display.fill_rect(char_x + 2, y + 8, 8, 4, color)  # Middle
-                self.display.fill_rect(char_x + 2, y + 12, 10, 4, color) # Bottom
-                self.display.fill_rect(char_x, y + 6, 4, 8, color)      # Left side
-            elif char == ' ':
-                # Space - do nothing
-                pass
-            else:
-                # Default: draw a simple rectangle for unknown characters
-                self.display.fill_rect(char_x + 2, y + 2, 12, 12, color)
+            # Draw each character in a 2x2 grid to create actual scaling
+            for row in range(2):
+                for col in range(2):
+                    # Offset each character copy to create a solid scaled appearance
+                    offset_x = char_x + col
+                    offset_y = y + row
+                    self.display.text(char, offset_x, offset_y, color)
                 
     def draw_medium_text(self, text, x, y, color):
-        """Draw text at 1.5x size (12px wide per char)"""
+        """Draw text at 1.5x size using display's text method"""
+        char_width = 12  # 1.5x normal character width for spacing
         for i, char in enumerate(text):
-            char_x = x + i * 12  # Each character is 12 pixels wide
-            
-            if char == 'L':
-                self.display.fill_rect(char_x, y, 3, 12, color)       # Stem
-                self.display.fill_rect(char_x, y + 9, 9, 3, color)    # Bottom
-            elif char == 'e':
-                self.display.fill_rect(char_x + 1, y + 3, 8, 3, color)  # Top
-                self.display.fill_rect(char_x + 1, y + 6, 6, 3, color)  # Middle
-                self.display.fill_rect(char_x + 1, y + 9, 8, 3, color)  # Bottom
-                self.display.fill_rect(char_x, y + 4, 3, 6, color)      # Left
-            elif char == 't':
-                self.display.fill_rect(char_x + 4, y, 3, 12, color)   # Stem
-                self.display.fill_rect(char_x + 1, y + 3, 8, 3, color) # Cross
-            elif char == '\'':
-                self.display.fill_rect(char_x + 4, y, 2, 4, color)    # Apostrophe
-            elif char == 's':
-                self.display.fill_rect(char_x + 1, y + 3, 8, 3, color)  # Top
-                self.display.fill_rect(char_x + 1, y + 6, 6, 3, color)  # Middle
-                self.display.fill_rect(char_x + 1, y + 9, 8, 3, color)  # Bottom
-            elif char == ' ':
-                pass  # Space
-            elif char == 'd':
-                self.display.fill_rect(char_x + 7, y, 3, 12, color)   # Right stem
-                self.display.fill_rect(char_x + 1, y + 3, 6, 3, color) # Top
-                self.display.fill_rect(char_x + 1, y + 9, 6, 3, color) # Bottom  
-                self.display.fill_rect(char_x, y + 6, 3, 3, color)     # Left middle
-            elif char == 'o':
-                self.display.fill_rect(char_x + 1, y + 3, 8, 3, color) # Top
-                self.display.fill_rect(char_x + 1, y + 9, 8, 3, color) # Bottom
-                self.display.fill_rect(char_x, y + 6, 3, 3, color)     # Left
-                self.display.fill_rect(char_x + 7, y + 6, 3, 3, color) # Right
-            elif char == 'i':
-                self.display.fill_rect(char_x + 4, y + 3, 3, 9, color) # Stem
-                self.display.fill_rect(char_x + 4, y, 3, 2, color)     # Dot
-            elif char == '!':
-                self.display.fill_rect(char_x + 4, y, 3, 8, color)     # Stem
-                self.display.fill_rect(char_x + 4, y + 10, 3, 2, color) # Dot
-            else:
-                # Default
-                self.display.fill_rect(char_x + 2, y + 2, 8, 8, color)
+            char_x = x + i * char_width
+            # Draw character with slight scaling for medium size
+            self.display.text(char, char_x, y, color)
+            self.display.text(char, char_x + 1, y, color)
                 
     def draw_border(self):
         """Draw decorative border"""
@@ -293,12 +207,9 @@ class Loader:
         self.display.display()
         time.sleep_ms(2000)
         
-    def run(self, duration=3000):
+    def run(self):
         """
         Run the complete loading sequence
-        
-        Args:
-            duration: Total duration in milliseconds
         """
         # Show greeting first
         self.show_greeting()
