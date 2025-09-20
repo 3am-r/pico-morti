@@ -2,6 +2,10 @@
 #WAVESHARE_1_3 #GEEKPI_3_5
 TARGET_HARDWARE=GEEKPI_3_5
 
+# Personal Configuration
+FIRST_NAME=Amr
+LAST_NAME=Salem
+
 # WiFi Configuration  
 SSID=Morti
 PASSWORD=1234

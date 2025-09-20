@@ -152,6 +152,11 @@ class Settings:
                 f.write("#WAVESHARE_1_3 #GEEKPI_3_5\n")
                 if "TARGET_HARDWARE" in config:
                     f.write(f"TARGET_HARDWARE={config['TARGET_HARDWARE']}\n")
+                f.write("\n# Personal Configuration\n")
+                if "FIRST_NAME" in config:
+                    f.write(f"FIRST_NAME={config['FIRST_NAME']}\n")
+                if "LAST_NAME" in config:
+                    f.write(f"LAST_NAME={config['LAST_NAME']}\n")
                 f.write("\n# WiFi Configuration\n")
                 if "SSID" in config:
                     f.write(f"SSID={config['SSID']}\n")

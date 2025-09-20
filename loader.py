@@ -17,6 +17,25 @@ class Loader:
         self.display = display
         self.width = display.width
         self.height = display.height
+    
+    def load_names_from_config(self):
+        """Load first name and last name from config.txt"""
+        first_name = "Amr"  # Default values
+        last_name = "Salem"
+        
+        try:
+            with open("config.txt", "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("FIRST_NAME="):
+                        first_name = line.split("=", 1)[1].strip()
+                    elif line.startswith("LAST_NAME="):
+                        last_name = line.split("=", 1)[1].strip()
+        except OSError:
+            # If config file doesn't exist, use defaults
+            pass
+        
+        return first_name, last_name
         
     def show_greeting(self):
         """Show personalized greeting"""
@@ -26,9 +45,10 @@ class Loader:
         # Draw decorative border
         self.draw_border()
         
-        # Main greeting - centered with larger text
-        greeting = "Ya Amr"
-        greeting2 = "Ya Salem"
+        # Main greeting - centered with larger text (loaded from config)
+        first_name, last_name = self.load_names_from_config()
+        greeting = f"Ya {first_name}"
+        greeting2 = f"Ya {last_name}"
         
         # Calculate positions for 2x sized text
         x1 = (self.width - len(greeting) * 12) // 2  # 16 pixels wide for 2x text
