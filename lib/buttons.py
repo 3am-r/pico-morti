@@ -1,10 +1,15 @@
 """
-Button driver for Waveshare Pico-LCD-1.3
+Button driver - Device agnostic
 4 user buttons (A, B, X, Y)
 """
 
 from machine import Pin
 import time
+import sys
+
+# Import hardware configuration
+sys.path.append('devices')
+from devices.hardware_runtime import get_hardware_config
 
 class Button:
     def __init__(self, pin, name, pull_up=True):
@@ -141,18 +146,18 @@ class Button:
 class Buttons:
     def __init__(self):
         """
-        Initialize all 4 buttons for Pico-LCD-1.3
-        Button layout:
-            A: GPIO15
-            B: GPIO17
-            X: GPIO19
-            Y: GPIO21
+        Initialize buttons using hardware configuration
         """
+        # Get hardware configuration
+        hw_config = get_hardware_config()
+        buttons_config = hw_config["BUTTONS"]
+        
+        # Initialize buttons based on hardware configuration
         self.buttons = {
-            'A': Button(15, 'A'),
-            'B': Button(17, 'B'),
-            'X': Button(19, 'X'),
-            'Y': Button(21, 'Y')
+            'A': Button(buttons_config['A'], 'A', buttons_config['PULL_UP']),
+            'B': Button(buttons_config['B'], 'B', buttons_config['PULL_UP']),
+            'X': Button(buttons_config['X'], 'X', buttons_config['PULL_UP']),
+            'Y': Button(buttons_config['Y'], 'Y', buttons_config['PULL_UP'])
         }
         
         # Track button combinations

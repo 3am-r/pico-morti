@@ -1,35 +1,46 @@
 """
-Battery Monitor for UPS Module
+Battery Monitor - Device agnostic
 Reads battery percentage and status via I2C communication
 Compatible with 5V I2C UPS modules for Raspberry Pi Pico
 """
 
 import machine
 import time
+import sys
+
+# Import hardware configuration
+sys.path.append('devices')
+from devices.hardware_runtime import get_hardware_config
 
 class BatteryMonitor:
-    def __init__(self, sda_pin=0, scl_pin=1, i2c_addr=0x36):
+    def __init__(self, sda_pin=None, scl_pin=None, i2c_addr=None):
         """
-        Initialize battery monitor
-        sda_pin: I2C SDA pin (default GPIO0 for Pico 2 WH)
-        scl_pin: I2C SCL pin (default GPIO1 for Pico 2 WH) 
-        i2c_addr: I2C address of UPS module (common addresses: 0x36, 0x6B)
+        Initialize battery monitor using hardware configuration
         """
-        self.i2c_addr = i2c_addr
+        # Get hardware configuration
+        hw_config = get_hardware_config()
+        battery_config = hw_config["BATTERY"]
+        
+        # Use hardware config values or provided parameters
+        self.sda_pin = sda_pin if sda_pin is not None else battery_config["SDA_PIN"]
+        self.scl_pin = scl_pin if scl_pin is not None else battery_config["SCL_PIN"]
+        self.i2c_addr = i2c_addr if i2c_addr is not None else battery_config["I2C_ADDR"]
+        self.enabled = battery_config["ENABLED"]
+        
         self.i2c = None
         self.last_reading = {'percentage': -1, 'voltage': 0.0, 'status': 'Unknown'}
         
         try:
             # Validate pin numbers
-            if not (0 <= sda_pin <= 28 and 0 <= scl_pin <= 28):
-                raise ValueError(f"Invalid pin numbers: SDA={sda_pin}, SCL={scl_pin}")
+            if not (0 <= self.sda_pin <= 28 and 0 <= self.scl_pin <= 28):
+                raise ValueError(f"Invalid pin numbers: SDA={self.sda_pin}, SCL={self.scl_pin}")
             
             # Determine I2C bus (0 or 1) based on pin numbers
             # I2C0: pins 0,1,4,5,8,9,12,13,16,17,20,21
             # I2C1: pins 2,3,6,7,10,11,14,15,18,19,26,27
-            if sda_pin in [0, 4, 8, 12, 16, 20]:
+            if self.sda_pin in [0, 4, 8, 12, 16, 20]:
                 i2c_id = 0
-            elif sda_pin in [2, 6, 10, 14, 18, 26]:
+            elif self.sda_pin in [2, 6, 10, 14, 18, 26]:
                 i2c_id = 1
             else:
                 # Try I2C0 as default
@@ -37,8 +48,8 @@ class BatteryMonitor:
             
             # Initialize I2C with conservative frequency to avoid issues
             self.i2c = machine.I2C(i2c_id, 
-                                  sda=machine.Pin(sda_pin), 
-                                  scl=machine.Pin(scl_pin), 
+                                  sda=machine.Pin(self.sda_pin), 
+                                  scl=machine.Pin(self.scl_pin), 
                                   freq=100000)  # Use slower, more reliable frequency
             
             # Quick scan for devices (with timeout protection)

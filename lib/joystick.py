@@ -1,30 +1,33 @@
 """
-Joystick driver for Waveshare Pico-LCD-1.3
+Joystick driver - Device agnostic
 5-way joystick (UP, DOWN, LEFT, RIGHT, CENTER)
 """
 
 from machine import Pin, ADC
 import time
+import sys
+
+# Import hardware configuration
+sys.path.append('devices')
+from devices.hardware_runtime import get_hardware_config
 
 class Joystick:
     def __init__(self, x_pin=None, y_pin=None, sw_pin=None):
         """
-        Initialize joystick
-        
-        For Waveshare Pico-LCD-1.3, the joystick is digital (not analog)
-        Using discrete GPIO pins for directions:
-        - UP: GPIO2
-        - DOWN: GPIO18  
-        - LEFT: GPIO16
-        - RIGHT: GPIO20
-        - CENTER: GPIO3
+        Initialize joystick using hardware configuration
         """
-        # Digital joystick pins for Waveshare Pico-LCD-1.3
-        self.up_pin = Pin(2, Pin.IN, Pin.PULL_UP)
-        self.down_pin = Pin(18, Pin.IN, Pin.PULL_UP)
-        self.left_pin = Pin(16, Pin.IN, Pin.PULL_UP)
-        self.right_pin = Pin(20, Pin.IN, Pin.PULL_UP)
-        self.center_pin = Pin(3, Pin.IN, Pin.PULL_UP)
+        # Get hardware configuration
+        hw_config = get_hardware_config()
+        joystick_config = hw_config["JOYSTICK"]
+        
+        # Configure joystick pins based on hardware
+        pull_mode = Pin.PULL_UP if joystick_config["PULL_UP"] else None
+        
+        self.up_pin = Pin(joystick_config["UP"], Pin.IN, pull_mode)
+        self.down_pin = Pin(joystick_config["DOWN"], Pin.IN, pull_mode)
+        self.left_pin = Pin(joystick_config["LEFT"], Pin.IN, pull_mode)
+        self.right_pin = Pin(joystick_config["RIGHT"], Pin.IN, pull_mode)
+        self.center_pin = Pin(joystick_config["CENTER"], Pin.IN, pull_mode)
         
         # Debounce settings
         self.debounce_time = 150  # Default debounce time in ms
