@@ -456,12 +456,9 @@ class MindfulLauncher:
             self.draw_screen()
             time.sleep_ms(200)
             
-        # Button B - Sleep mode with direct pin reading for immediate response
-        if not self.buttons.buttons['B'].pin.value():  # Button pressed (inverted logic due to pull-up)
-            # Small delay to avoid bouncing, but much shorter than normal debounce
-            time.sleep_ms(50)
-            if not self.buttons.buttons['B'].pin.value():  # Still pressed after delay
-                return "sleep"
+        # Button B - Sleep mode using standard button detection
+        if self.buttons.is_pressed('B'):
+            return "sleep"
             
         return "continue"
             
