@@ -29,7 +29,7 @@ class WiFiTimeSync:
     def load_wifi_config(self):
         """Load WiFi credentials from config file"""
         try:
-            with open("wifi_config.txt", "r") as f:
+            with open("config.txt", "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     line = line.strip()
@@ -51,7 +51,7 @@ class WiFiTimeSync:
     def save_wifi_config(self, ssid, password, timezone_hours=0, dst_enabled=True):
         """Save WiFi credentials to config file"""
         try:
-            with open("wifi_config.txt", "w") as f:
+            with open("config.txt", "w") as f:
                 f.write(f"SSID={ssid}\n")
                 f.write(f"PASSWORD={password}\n")
                 f.write(f"TIMEZONE={timezone_hours}\n")
@@ -235,7 +235,7 @@ class WiFiTimeSync:
         # WiFi configuration needed
         self.display.fill(Color.BLACK)
         self.display.text("WiFi SETUP NEEDED", 45, 50, Color.YELLOW)
-        self.display.text("Create wifi_config.txt", 25, 80, Color.WHITE)
+        self.display.text("Create config.txt", 25, 80, Color.WHITE)
         self.display.text("with your credentials:", 25, 100, Color.WHITE)
         self.display.text("", 10, 130, Color.CYAN)
         self.display.text("SSID=YourWiFiName", 10, 150, Color.CYAN)

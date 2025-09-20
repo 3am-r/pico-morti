@@ -84,7 +84,7 @@ class TimeSyncApp:
         self.display.text("WiFi SETUP", 75, 10, Color.CYAN)
         
         self.display.text("1. Create file:", 10, 40, Color.WHITE)
-        self.display.text("  wifi_config.txt", 10, 55, Color.YELLOW)
+        self.display.text("  config.txt", 10, 55, Color.YELLOW)
         
         self.display.text("2. Add your info:", 10, 80, Color.WHITE)
         self.display.text("SSID=YourWiFiName", 10, 100, Color.CYAN)

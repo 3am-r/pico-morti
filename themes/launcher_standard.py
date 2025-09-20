@@ -71,7 +71,7 @@ class StandardLauncher:
             padding_x = 6
             padding_y = 2
             
-        start_x = (240 - (icon_width * cols + padding_x * (cols - 1))) // 2
+        start_x = (self.display.width - (icon_width * cols + padding_x * (cols - 1))) // 2
         start_y = 25
         
         # Get app info from centralized registry

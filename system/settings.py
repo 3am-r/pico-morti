@@ -60,20 +60,26 @@ class Settings:
         self.init_battery_monitor()
         
     def init_battery_monitor(self):
-        """Initialize battery monitor - fail gracefully to avoid app crash"""
+        """Initialize battery monitor using hardware configuration"""
         try:
-            # Try configurations in order of likelihood based on scan results
-            # GP6/GP7 found a device at 0x43, so try that first
+            # Import hardware configuration
+            import sys
+            sys.path.append('devices')
+            from devices.hardware_runtime import get_hardware_config
+            
+            hw_config = get_hardware_config()
+            battery_config = hw_config.get("BATTERY", {})
+            
+            # Only initialize if battery monitoring is enabled in hardware config
+            if not battery_config.get("ENABLED", False):
+                print("Battery monitoring disabled in hardware config")
+                return
+                
+            # Use hardware-configured pins
             safe_configs = [
-                {'sda': 6, 'scl': 7},   # I2C1 - Device found here during scan
-                {'sda': 0, 'scl': 1},   # I2C0 - Most common for UPS hats
-                {'sda': 2, 'scl': 3},   # I2C1 - Safe alternative
-                {'sda': 4, 'scl': 5},   # I2C0 - Safe alternative
-                {'sda': 14, 'scl': 15}, # I2C1 - Safe
-                {'sda': 16, 'scl': 17}, # I2C0 - Safe
-                {'sda': 18, 'scl': 19}, # I2C1 - Safe
-                {'sda': 20, 'scl': 21}, # I2C0 - Safe
-                {'sda': 26, 'scl': 27}, # I2C1 - ADC pins (safe if not using ADC)
+                {'sda': battery_config.get("SDA_PIN", 8), 'scl': battery_config.get("SCL_PIN", 9)},
+                {'sda': 0, 'scl': 1},   # Fallback
+                {'sda': 2, 'scl': 3},   # Fallback
             ]
             
             for config in safe_configs:
@@ -114,6 +120,49 @@ class Settings:
             print(f"⚠️ Battery monitor init error (non-critical): {e}")
             # Don't let battery monitor issues crash the main app
             self.battery_monitor = None
+    
+    def write_config_file(self, ssid=None, password=None, timezone=None, dst_enabled=None):
+        """Write config file while preserving all settings"""
+        # Read current config to preserve all settings
+        config = {}
+        try:
+            with open("config.txt", "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        key, value = line.split("=", 1)
+                        config[key.strip()] = value.strip()
+        except OSError:
+            pass
+        
+        # Update only the specified values
+        if ssid is not None:
+            config["SSID"] = ssid
+        if password is not None:
+            config["PASSWORD"] = password
+        if timezone is not None:
+            config["TIMEZONE"] = str(timezone)
+        if dst_enabled is not None:
+            config["DST"] = 'true' if dst_enabled else 'false'
+        
+        # Write back the complete config
+        try:
+            with open("config.txt", "w") as f:
+                f.write("# Device Configuration\n")
+                f.write("#WAVESHARE_1_3 #GEEKPI_3_5\n")
+                if "TARGET_HARDWARE" in config:
+                    f.write(f"TARGET_HARDWARE={config['TARGET_HARDWARE']}\n")
+                f.write("\n# WiFi Configuration\n")
+                if "SSID" in config:
+                    f.write(f"SSID={config['SSID']}\n")
+                if "PASSWORD" in config:
+                    f.write(f"PASSWORD={config['PASSWORD']}\n")
+                if "TIMEZONE" in config:
+                    f.write(f"TIMEZONE={config['TIMEZONE']}\n")
+                if "DST" in config:
+                    f.write(f"DST={config['DST']}\n")
+        except Exception as e:
+            print(f"Config write error: {e}")
             
     def get_battery_status_text(self):
         """Get battery status text for display"""
@@ -723,7 +772,7 @@ class Settings:
             timezone = -5  # Default
             dst_enabled = True  # Default
             try:
-                with open("wifi_config.txt", "r") as f:
+                with open("config.txt", "r") as f:
                     for line in f:
                         line = line.strip()
                         if line.startswith("TIMEZONE="):
@@ -734,12 +783,8 @@ class Settings:
             except:
                 pass
                 
-            # Write new config
-            with open("wifi_config.txt", "w") as f:
-                f.write(f"SSID={ssid}\n")
-                f.write(f"PASSWORD={password}\n")
-                f.write(f"TIMEZONE={timezone}\n")
-                f.write(f"DST={'true' if dst_enabled else 'false'}\n")
+            # Write new config while preserving other settings
+            self.write_config_file(ssid=ssid, password=password, timezone=timezone, dst_enabled=dst_enabled)
                 
         except Exception as e:
             print(f"Save config error: {e}")
@@ -778,14 +823,14 @@ class Settings:
     def apply_timezone_settings(self):
         """Apply timezone settings"""
         try:
-            # Update wifi_config.txt with new timezone
+            # Update config.txt with new timezone
             ssid = "BFamily"  # Default
             password = "er0dMonzen"  # Default
             dst_enabled = True  # Default
             
             # Read current WiFi settings if available
             try:
-                with open("wifi_config.txt", "r") as f:
+                with open("config.txt", "r") as f:
                     for line in f:
                         line = line.strip()
                         if line.startswith("SSID="):
@@ -798,13 +843,9 @@ class Settings:
             except:
                 pass
                 
-            # Write updated config
+            # Write updated config while preserving other settings
             tz_offset = int(self.timezones[self.selected_timezone][1])
-            with open("wifi_config.txt", "w") as f:
-                f.write(f"SSID={ssid}\n")
-                f.write(f"PASSWORD={password}\n")
-                f.write(f"TIMEZONE={tz_offset}\n")
-                f.write(f"DST={'true' if dst_enabled else 'false'}\n")
+            self.write_config_file(ssid=ssid, password=password, timezone=tz_offset, dst_enabled=dst_enabled)
                 
             # Show success
             tz_name = self.timezones[self.selected_timezone][0]

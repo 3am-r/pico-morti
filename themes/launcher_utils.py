@@ -180,13 +180,13 @@ class LauncherUtils:
     def draw_app_grid(display, apps, current_app_index, title="APPS", start_y=25):
         """Draw a standard app grid using common layout logic"""
         # Center title
-        title_x = (240 - len(title) * 8) // 2
+        title_x = (display.width - len(title) * 8) // 2
         display.text(title, title_x, 5, Color.CYAN)
         
         num_apps = len(apps)
         layout = LauncherUtils.calculate_grid_layout(num_apps)
         
-        start_x = (240 - (layout['icon_width'] * layout['cols'] + layout['padding_x'] * (layout['cols'] - 1))) // 2
+        start_x = (display.width - (layout['icon_width'] * layout['cols'] + layout['padding_x'] * (layout['cols'] - 1))) // 2
         
         # Get app display info
         app_names, app_colors = LauncherUtils.get_app_display_info()

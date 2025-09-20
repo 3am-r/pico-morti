@@ -21,7 +21,8 @@ sys.path.append('devices')
 # Import hardware configuration
 from devices.hardware_runtime import get_hardware_config, validate_hardware_config
 
-from lib.st7789 import ST7789, Color
+# Import display driver based on hardware config
+# This will be dynamically selected based on DISPLAY.DRIVER
 from lib.joystick import Joystick
 from lib.buttons import Buttons
 from loader import Loader
@@ -45,25 +46,55 @@ class MainApp:
         
         # Initialize SPI for display using hardware configuration
         spi_config = hw_config["SPI"]
-        self.spi = SPI(spi_config["ID"], 
-                      baudrate=spi_config["BAUDRATE"], 
-                      polarity=spi_config["POLARITY"], 
-                      phase=spi_config["PHASE"],
-                      sck=Pin(spi_config["SCK"]), 
-                      mosi=Pin(spi_config["MOSI"]))
+        spi_kwargs = {
+            "baudrate": spi_config["BAUDRATE"], 
+            "polarity": spi_config["POLARITY"], 
+            "phase": spi_config["PHASE"],
+            "sck": Pin(spi_config["SCK"]), 
+            "mosi": Pin(spi_config["MOSI"])
+        }
+        
+        # Add MISO only if it's specified and valid
+        if spi_config.get("MISO", -1) >= 0:
+            spi_kwargs["miso"] = Pin(spi_config["MISO"])
+            
+        self.spi = SPI(spi_config["ID"], **spi_kwargs)
+        
+        print(f"SPI initialized: ID={spi_config['ID']}, Baudrate={spi_config['BAUDRATE']}")
+        print(f"SPI pins: SCK={spi_config['SCK']}, MOSI={spi_config['MOSI']}, MISO={spi_config.get('MISO', 'None')}")
         
         # Initialize display using hardware configuration
         display_config = hw_config["DISPLAY"]
-        self.display = ST7789(
+        driver_name = display_config.get("DRIVER", "st7789")
+        
+        # Import appropriate display driver
+        if driver_name == "st7789":
+            from lib.st7789 import ST7789 as DisplayDriver, Color
+        elif driver_name == "st7796":
+            from lib.st7796 import ST7796 as DisplayDriver, Color
+        else:
+            raise ValueError(f"Unsupported display driver: {driver_name}")
+        
+        # Initialize display with appropriate driver
+        if display_config["BACKLIGHT"] != -1:
+            backlight_pin = Pin(display_config["BACKLIGHT"], Pin.OUT)
+        else:
+            backlight_pin = None
+            
+        self.display = DisplayDriver(
             spi=self.spi,
             width=display_config["WIDTH"],
             height=display_config["HEIGHT"],
             reset=Pin(display_config["RESET"], Pin.OUT),
             dc=Pin(display_config["DC"], Pin.OUT),
             cs=Pin(display_config["CS"], Pin.OUT),
-            backlight=Pin(display_config["BACKLIGHT"], Pin.OUT),
+            backlight=backlight_pin,
             rotation=display_config["ROTATION"]
         )
+        
+        # Make Color class globally available
+        import builtins
+        builtins.Color = Color
         
         # Initialize input devices
         self.joystick = Joystick()
@@ -145,8 +176,9 @@ class MainApp:
         # Manual title case for MicroPython compatibility
         launcher_display = launcher_type[0].upper() + launcher_type[1:] if launcher_type else ""
         launcher_text = f"Launcher: {launcher_display}"
-        x = (240 - len(launcher_text) * 8) // 2
-        self.display.text(launcher_text, x, 200, Color.CYAN)
+        x = (self.display.width - len(launcher_text) * 8) // 2
+        y = self.display.height - 280  # Adjust Y position for larger displays
+        self.display.text(launcher_text, x, y, Color.CYAN)
         
         self.display.display()
         time.sleep_ms(1500)
@@ -156,16 +188,17 @@ class MainApp:
         self.display.fill(Color.BLACK)
         
         msg = "SLEEPING"
-        x = (240 - len(msg) * 8) // 2
-        self.display.text(msg, x, 90, Color.WHITE)
+        x = (self.display.width - len(msg) * 8) // 2
+        y = self.display.height // 2 - 40
+        self.display.text(msg, x, y, Color.WHITE)
         
         instruction = "Press any button"
-        x2 = (240 - len(instruction) * 8) // 2
-        self.display.text(instruction, x2, 110, Color.GRAY)
+        x2 = (self.display.width - len(instruction) * 8) // 2
+        self.display.text(instruction, x2, y + 20, Color.GRAY)
         
         instruction2 = "or move joystick"
-        x3 = (240 - len(instruction2) * 8) // 2
-        self.display.text(instruction2, x3, 130, Color.GRAY)
+        x3 = (self.display.width - len(instruction2) * 8) // 2
+        self.display.text(instruction2, x3, y + 40, Color.GRAY)
         
         self.display.display()
         
@@ -220,12 +253,13 @@ class MainApp:
         self.display.fill(Color.BLACK)
         
         msg = "GOODBYE"
-        x = (240 - len(msg) * 8) // 2
-        self.display.text(msg, x, 100, Color.WHITE)
+        x = (self.display.width - len(msg) * 8) // 2
+        y = self.display.height // 2 - 20
+        self.display.text(msg, x, y, Color.WHITE)
         
         msg2 = "Shutting down..."
-        x2 = (240 - len(msg2) * 8) // 2
-        self.display.text(msg2, x2, 120, Color.GRAY)
+        x2 = (self.display.width - len(msg2) * 8) // 2
+        self.display.text(msg2, x2, y + 20, Color.GRAY)
         
         self.display.display()
         time.sleep_ms(1000)

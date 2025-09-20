@@ -1,0 +1,8 @@
+# Device Configuration
+#WAVESHARE_1_3 #GEEKPI_3_5
+TARGET_HARDWARE=GEEKPI_3_5
+
+# WiFi Configuration  
+SSID=Morti
+PASSWORD=1234
+TIMEZONE=-5

@@ -101,11 +101,12 @@ class MindfulLauncher:
         # Simple dark background (no flickering)
         self.display.fill(Color.BLACK)
         
-        # Clean header 
-       
+        # Clean header - positioned based on screen height
+        header_y = max(8, (self.display.height - 400) // 4)
+        
         welcome_text = "How can I help you today?"
-        welcome_x = (240 - len(welcome_text) * 8) // 2
-        self.display.text(welcome_text, welcome_x, 8, Color.WHITE)
+        welcome_x = (self.display.width - len(welcome_text) * 8) // 2
+        self.display.text(welcome_text, welcome_x, header_y, Color.WHITE)
         
         # Time-based contextual subtitle
         time_greetings = {
@@ -116,13 +117,15 @@ class MindfulLauncher:
             "night": "Peaceful night"
         }
         subtitle = time_greetings.get(context, "Let's be mindful")
-        sub_x = (240 - len(subtitle) * 8) // 2
-        self.display.text(subtitle, sub_x, 25, Color.CYAN)
+        sub_x = (self.display.width - len(subtitle) * 8) // 2
+        self.display.text(subtitle, sub_x, header_y + 17, Color.CYAN)
         
-        # Modern card-based intent layout
-        start_y = 55
+        # Modern card-based intent layout - center vertically
+        content_height = len(self.intents) * 40  # approximate content height
+        start_y = header_y + 50
         card_height = 35
         card_spacing = 5
+        card_width = self.display.width - 30  # Leave 15px margin on each side
         
         for i, intent in enumerate(self.intents):
             y_pos = start_y + i * (card_height + card_spacing)
@@ -130,12 +133,12 @@ class MindfulLauncher:
             # Card background and selection highlighting
             if i == self.selected_intent:
                 # Selected intent - highlighted border
-                self.display.rect(15, y_pos, 210, card_height, intent["color"])
+                self.display.rect(15, y_pos, card_width, card_height, intent["color"])
                 text_color = intent["color"]
                 desc_color = Color.WHITE
             elif i == suggested_intent:
                 # Suggested intent - subtle border
-                self.display.rect(15, y_pos, 210, card_height, Color.rgb565(60, 70, 80))
+                self.display.rect(15, y_pos, card_width, card_height, Color.rgb565(60, 70, 80))
                 text_color = intent["color"]
                 desc_color = Color.LIGHT_GRAY
             else:
@@ -155,19 +158,19 @@ class MindfulLauncher:
             
             # Suggested indicator
             if i == suggested_intent and i != self.selected_intent:
-                self.display.text("*", 200, y_pos + 8, Color.YELLOW)
+                self.display.text("*", card_width - 25, y_pos + 8, Color.YELLOW)
         
         # Modern footer design
         footer_y = 200
         
         # Browse option
         browse_text = "Browse All Apps"
-        browse_x = (240 - len(browse_text) * 8) // 2
+        browse_x = (self.display.width - len(browse_text) * 8) // 2
         self.display.text(browse_text, browse_x, footer_y + 5, Color.GRAY)
         
         # Instructions
         instructions = "Up/Down:Select  A:Go  Y:Browse"
-        inst_x = (240 - len(instructions) * 8) // 2
+        inst_x = (self.display.width - len(instructions) * 8) // 2
         self.display.text(instructions, inst_x, footer_y + 20, Color.DARK_GRAY)
         
     def draw_flow_guidance(self):
@@ -181,17 +184,17 @@ class MindfulLauncher:
         
         # Elegant header with intent context
         title = f"{intent['name']} Journey"
-        title_x = (240 - len(title) * 8) // 2
+        title_x = (self.display.width - len(title) * 8) // 2
         self.display.text(title, title_x, 8, Color.WHITE)
         
         # Progress indicator
         progress_text = f"Step {self.selected_flow_step + 1} of {len(flow_questions)}"
-        prog_x = (240 - len(progress_text) * 8) // 2
+        prog_x = (self.display.width - len(progress_text) * 8) // 2
         self.display.text(progress_text, prog_x, 25, Color.LIGHT_GRAY)
         
         # Progress bar
         bar_width = 180
-        bar_x = (240 - bar_width) // 2
+        bar_x = (self.display.width - bar_width) // 2
         progress_pct = (self.selected_flow_step + 1) / len(flow_questions)
         self.display.fill_rect(bar_x, 35, bar_width, 6, Color.rgb565(40, 45, 55))
         self.display.fill_rect(bar_x, 35, int(bar_width * progress_pct), 6, Color.WHITE)
@@ -209,17 +212,17 @@ class MindfulLauncher:
             line1 = " ".join(words[:mid])
             line2 = " ".join(words[mid:])
             
-            line1_x = (240 - len(line1) * 8) // 2
-            line2_x = (240 - len(line2) * 8) // 2
+            line1_x = (self.display.width - len(line1) * 8) // 2
+            line2_x = (self.display.width - len(line2) * 8) // 2
             self.display.text(line1, line1_x, card_y + 15, Color.WHITE)
             self.display.text(line2, line2_x, card_y + 30, Color.WHITE)
         else:
-            question_x = (240 - len(current_question) * 8) // 2
+            question_x = (self.display.width - len(current_question) * 8) // 2
             self.display.text(current_question, question_x, card_y + 22, Color.WHITE)
         
         # Flow navigation dots - modern style
         dot_y = 130
-        dot_start_x = (240 - len(flow_questions) * 16) // 2
+        dot_start_x = (self.display.width - len(flow_questions) * 16) // 2
         for i, _ in enumerate(flow_questions):
             x = dot_start_x + i * 16
             if i == self.selected_flow_step:
@@ -239,12 +242,18 @@ class MindfulLauncher:
             "Stay present"
         ]
         motivation = motivation_texts[self.selected_flow_step % len(motivation_texts)]
-        mot_x = (240 - len(motivation) * 8) // 2
-        self.display.text(motivation, mot_x, 150, Color.CYAN)
+        mot_x = (self.display.width - len(motivation) * 8) // 2
+        motivation_y = self.display.height // 2 + 20  # Position in middle area
+        self.display.text(motivation, mot_x, motivation_y, Color.CYAN)
         
-        # App suggestions section
-        self.display.fill_rect(15, 170, 210, 45, Color.rgb565(25, 30, 40))
-        self.display.text("Recommended:", 25, 175, Color.YELLOW)
+        # Modern instructions footer - positioned at bottom of screen
+        footer_y = self.display.height - 25
+        
+        # App suggestions section - responsive positioning
+        suggestions_y = footer_y - 70
+        suggestions_width = self.display.width - 30
+        self.display.fill_rect(15, suggestions_y, suggestions_width, 45, Color.rgb565(25, 30, 40))
+        self.display.text("Recommended:", 25, suggestions_y + 5, Color.YELLOW)
         
         relevant_apps = LauncherUtils.get_intent_apps(self.apps, intent)[:3]
         
@@ -253,16 +262,17 @@ class MindfulLauncher:
             name = app_names.get(app.__class__.__name__, app.__class__.__name__[:6])
             app_x = 25 + i * 65
             # App pill design
-            self.display.fill_rect(app_x, 190, 60, 18, Color.rgb565(40, 45, 55))
-            self.display.rect(app_x, 190, 60, 18, Color.GRAY)
+            pill_y = suggestions_y + 20
+            self.display.fill_rect(app_x, pill_y, 60, 18, Color.rgb565(40, 45, 55))
+            self.display.rect(app_x, pill_y, 60, 18, Color.GRAY)
             name_x = app_x + (60 - len(name) * 8) // 2
-            self.display.text(name, name_x, 195, Color.WHITE)
+            self.display.text(name, name_x, pill_y + 5, Color.WHITE)
         
-        # Modern instructions footer
-        self.display.fill_rect(0, 220, 240, 20, Color.rgb565(15, 20, 30))
+        # Draw footer
+        self.display.fill_rect(0, footer_y, self.display.width, 20, Color.rgb565(15, 20, 30))
         instructions = "Left/Right:Navigate  A:Choose  B:Back"
-        inst_x = (240 - len(instructions) * 8) // 2
-        self.display.text(instructions, inst_x, 225, Color.GRAY)
+        inst_x = (self.display.width - len(instructions) * 8) // 2
+        self.display.text(instructions, inst_x, footer_y + 5, Color.GRAY)
         
     def draw_app_grid(self):
         """Draw filtered app grid for current intent"""

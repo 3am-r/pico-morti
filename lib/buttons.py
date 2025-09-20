@@ -143,6 +143,47 @@ class Button:
             self.on_long_press = callback
 
 
+class DummyButton:
+    """Dummy button for devices that don't have all 4 buttons"""
+    def __init__(self, name):
+        self.name = name
+        self.pressed = False
+        self.last_state = True  # Not pressed
+        self.last_change_time = 0
+        self.debounce_time = 50
+        self.press_start_time = 0
+        self.long_press_time = 1000
+        self.is_long_press = False
+        self.last_press_time = 0
+        self.press_debounce_time = 200
+        
+    def read(self):
+        """Always return False (not pressed)"""
+        return False
+        
+    def update(self):
+        """No-op for dummy button"""
+        return None
+        
+    def is_pressed(self):
+        """Always return False (not pressed)"""
+        return False
+        
+    def is_held(self):
+        """Always return False (not held)"""
+        return False
+        
+    def wait_for_press(self, timeout=None):
+        """Never pressed, so return False after timeout"""
+        if timeout:
+            time.sleep_ms(timeout)
+        return False
+        
+    def set_callback(self, event, callback):
+        """No-op for dummy button"""
+        pass
+
+
 class Buttons:
     def __init__(self):
         """
@@ -152,13 +193,16 @@ class Buttons:
         hw_config = get_hardware_config()
         buttons_config = hw_config["BUTTONS"]
         
-        # Initialize buttons based on hardware configuration
-        self.buttons = {
-            'A': Button(buttons_config['A'], 'A', buttons_config['PULL_UP']),
-            'B': Button(buttons_config['B'], 'B', buttons_config['PULL_UP']),
-            'X': Button(buttons_config['X'], 'X', buttons_config['PULL_UP']),
-            'Y': Button(buttons_config['Y'], 'Y', buttons_config['PULL_UP'])
-        }
+        # Initialize only available buttons (skip -1 pins)
+        self.buttons = {}
+        
+        for button_name in ['A', 'B', 'X', 'Y']:
+            pin_num = buttons_config.get(button_name, -1)
+            if pin_num >= 0:  # Only create button if pin is valid
+                self.buttons[button_name] = Button(pin_num, button_name, buttons_config['PULL_UP'])
+            else:
+                # Create a dummy button that's never pressed for compatibility
+                self.buttons[button_name] = DummyButton(button_name)
         
         # Track button combinations
         self.combo_callbacks = {}

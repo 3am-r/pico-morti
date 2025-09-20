@@ -1,6 +1,6 @@
 """
 Joystick driver - Device agnostic
-5-way joystick (UP, DOWN, LEFT, RIGHT, CENTER)
+Supports both digital 5-way and analog 2-axis joysticks
 """
 
 from machine import Pin, ADC
@@ -11,23 +11,57 @@ import sys
 sys.path.append('devices')
 from devices.hardware_runtime import get_hardware_config
 
+class VirtualPin:
+    """Virtual pin that mimics Pin interface for analog joystick"""
+    def __init__(self, value_func):
+        self.value_func = value_func
+        
+    def value(self):
+        """Return the current state (0 = pressed, 1 = not pressed for pull-up logic)"""
+        return self.value_func()
+
 class Joystick:
     def __init__(self, x_pin=None, y_pin=None, sw_pin=None):
         """
         Initialize joystick using hardware configuration
+        Supports both digital and analog joysticks
         """
         # Get hardware configuration
         hw_config = get_hardware_config()
         joystick_config = hw_config["JOYSTICK"]
         
-        # Configure joystick pins based on hardware
-        pull_mode = Pin.PULL_UP if joystick_config["PULL_UP"] else None
+        self.joystick_type = joystick_config.get("TYPE", "digital")
         
-        self.up_pin = Pin(joystick_config["UP"], Pin.IN, pull_mode)
-        self.down_pin = Pin(joystick_config["DOWN"], Pin.IN, pull_mode)
-        self.left_pin = Pin(joystick_config["LEFT"], Pin.IN, pull_mode)
-        self.right_pin = Pin(joystick_config["RIGHT"], Pin.IN, pull_mode)
-        self.center_pin = Pin(joystick_config["CENTER"], Pin.IN, pull_mode)
+        if self.joystick_type == "analog":
+            # Analog joystick configuration
+            self.x_adc = ADC(Pin(joystick_config["X_PIN"]))
+            self.y_adc = ADC(Pin(joystick_config["Y_PIN"]))
+            
+            # Center button
+            pull_mode = Pin.PULL_UP if joystick_config["PULL_UP"] else None
+            self.center_pin = Pin(joystick_config["CENTER"], Pin.IN, pull_mode)
+            
+            # Thresholds for analog to digital conversion
+            self.threshold_low = joystick_config.get("THRESHOLD_LOW", 20000)
+            self.threshold_high = joystick_config.get("THRESHOLD_HIGH", 45000)
+            self.center_range = joystick_config.get("CENTER_RANGE", 5000)
+            self.center_value = 32768  # Middle of 16-bit ADC range
+            
+            # Create virtual pins that mimic digital behavior
+            self.up_pin = VirtualPin(lambda: self._check_analog_up())
+            self.down_pin = VirtualPin(lambda: self._check_analog_down())
+            self.left_pin = VirtualPin(lambda: self._check_analog_left())
+            self.right_pin = VirtualPin(lambda: self._check_analog_right())
+            
+        else:
+            # Digital joystick configuration
+            pull_mode = Pin.PULL_UP if joystick_config["PULL_UP"] else None
+            
+            self.up_pin = Pin(joystick_config["UP"], Pin.IN, pull_mode)
+            self.down_pin = Pin(joystick_config["DOWN"], Pin.IN, pull_mode)
+            self.left_pin = Pin(joystick_config["LEFT"], Pin.IN, pull_mode)
+            self.right_pin = Pin(joystick_config["RIGHT"], Pin.IN, pull_mode)
+            self.center_pin = Pin(joystick_config["CENTER"], Pin.IN, pull_mode)
         
         # Debounce settings
         self.debounce_time = 150  # Default debounce time in ms
@@ -43,6 +77,34 @@ class Joystick:
             'RIGHT': False,
             'CENTER': False
         }
+    
+    def _check_analog_up(self):
+        """Check if analog joystick is pushed up (returns 0 if up, 1 if not)"""
+        if self.joystick_type == "analog":
+            y_value = self.y_adc.read_u16()
+            return 0 if y_value < self.threshold_low else 1
+        return 1
+    
+    def _check_analog_down(self):
+        """Check if analog joystick is pushed down"""
+        if self.joystick_type == "analog":
+            y_value = self.y_adc.read_u16()
+            return 0 if y_value > self.threshold_high else 1
+        return 1
+    
+    def _check_analog_left(self):
+        """Check if analog joystick is pushed left"""
+        if self.joystick_type == "analog":
+            x_value = self.x_adc.read_u16()
+            return 0 if x_value < self.threshold_low else 1
+        return 1
+    
+    def _check_analog_right(self):
+        """Check if analog joystick is pushed right"""
+        if self.joystick_type == "analog":
+            x_value = self.x_adc.read_u16()
+            return 0 if x_value > self.threshold_high else 1
+        return 1
         
     def get_direction(self, debounce_override=None):
         """
