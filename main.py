@@ -131,6 +131,7 @@ class MainApp:
             ('gratitude', 'GratitudeProxy'),
             ('win_logger', 'WinLogger'),
             ('worry_box', 'WorryBox'),
+            ('med_tracker', 'MedTracker'),
             ('pet', 'XPet'),
             ('air_monkey', 'AirMonkey'),
             ('elemental', 'ElementalSandbox'),

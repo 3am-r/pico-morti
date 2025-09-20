@@ -162,6 +162,15 @@ class AppInfo:
             "intents": [],
             "description": "Sync time",
             "icon": "🔄"
+        },
+        "MedTracker": {
+            "display_name": "Med Tracker",
+            "short_name": "Meds",
+            "color": Color.ORANGE,
+            "category": "wellness",
+            "intents": ["check_in"],
+            "description": "Track medications",
+            "icon": "💊"
         }
     }
     
@@ -183,7 +192,7 @@ class AppInfo:
             "emoji": "💭",
             "description": "Self-care & reflection",
             "color": Color.BLUE,
-            "apps": ["energy_dial", "journal", "gratitude", "worry_box", "win_logger"],
+            "apps": ["energy_dial", "journal", "gratitude", "worry_box", "win_logger", "med_tracker"],
             "flow": ["How's your energy?", "Journal thoughts?", "Practice gratitude?"],
             "keywords": ["self", "care", "reflection", "mood"]
         },
@@ -219,7 +228,7 @@ class AppInfo:
         "wellness": {
             "name": "Wellness", 
             "color": Color.BLUE,
-            "apps": ["EnergyDial", "GratitudeProxy", "WinLogger", "WorryBox"]
+            "apps": ["EnergyDial", "GratitudeProxy", "WinLogger", "WorryBox", "MedTracker"]
         },
         "games": {
             "name": "Games",
@@ -286,6 +295,7 @@ class AppInfo:
             "QiblaCompass",
             "CountdownHub",
             "WorldClock",
+            "MedTracker",
             "TimeSyncApp",
             "Settings"
         ]
