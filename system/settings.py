@@ -363,7 +363,7 @@ class Settings:
         self.display.text("/", 132, 70, Color.WHITE)
         
         # Instructions
-        self.display.text("Joy:Navigate Up/Down:Change", 20, 110, Color.GRAY)
+        self.display.text("Joy:Navigate U/D:Change", 20, 110, Color.GRAY)
         self.display.text("A:Apply B:Back", 70, 130, Color.GRAY)
         
         # Current RTC time for reference
