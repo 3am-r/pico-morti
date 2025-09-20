@@ -1,0 +1,273 @@
+"""
+Main application entry point - Modular Launcher System
+Clean architecture with pluggable launcher implementations
+"""
+
+import gc
+import time
+import sys
+from machine import Pin, SPI, freq
+
+# Force garbage collection before heavy imports
+gc.collect()
+
+from lib.st7789 import ST7789, Color
+from lib.joystick import Joystick
+from lib.buttons import Buttons
+from loader import Loader
+
+# Add directories to path for MicroPython compatibility
+sys.path.append('games')
+sys.path.append('apps')
+sys.path.append('themes')
+sys.path.append('system')
+
+from launcher import LauncherManager
+
+# Don't import all apps at startup - import them lazily when needed
+# This saves significant memory at startup
+
+class MainApp:
+    def __init__(self):
+        """Initialize main application with modular launcher system"""
+        # Set CPU frequency for better performance
+        freq(125000000)
+        
+        # Initialize SPI for display
+        self.spi = SPI(1, baudrate=62500000, polarity=0, phase=0,
+                      sck=Pin(10), mosi=Pin(11))
+        
+        # Initialize display (Waveshare Pico-LCD-1.3)
+        self.display = ST7789(
+            spi=self.spi,
+            width=240,
+            height=240,
+            reset=Pin(12, Pin.OUT),
+            dc=Pin(8, Pin.OUT),
+            cs=Pin(9, Pin.OUT),
+            backlight=Pin(13, Pin.OUT),
+            rotation=0  # 0 degrees - screen upright with joystick on left, buttons on right
+        )
+        
+        # Initialize input devices
+        self.joystick = Joystick()
+        
+        self.buttons = Buttons()
+        
+        # Initialize apps
+        self.apps = self.create_apps()
+        
+        # Initialize launcher system
+        launcher_type = LauncherManager.load_launcher_preference()
+        self.launcher_manager = LauncherManager(
+            self.apps, self.display, self.joystick, self.buttons, launcher_type
+        )
+        
+        # Application state
+        self.running = True
+        self.sleeping = False
+        self.in_app = False
+        self.current_app = None
+        
+        # Show startup
+        self.show_startup()
+        
+    def create_apps(self):
+        """Create and return list of all apps with lazy imports"""
+        apps = []
+        
+        # Define app modules and classes for lazy loading
+        app_modules = [
+            ('journal', 'MicroJournal'),
+            ('tracker', 'ActivityTracker'),
+            ('energy_dial', 'EnergyDial'),
+            ('gratitude', 'GratitudeProxy'),
+            ('win_logger', 'WinLogger'),
+            ('worry_box', 'WorryBox'),
+            ('pet', 'XPet'),
+            ('air_monkey', 'AirMonkey'),
+            ('elemental', 'ElementalSandbox'),
+            ('fidget_spinner', 'FidgetSpinner'),
+            ('prayers', 'Prayers'),
+            ('hijri_calendar', 'HijriCalendar'),
+            ('qibla', 'QiblaCompass'),
+            ('countdown', 'CountdownHub'),
+            ('world_clock', 'WorldClock'),
+            ('settings', 'Settings')
+        ]
+        
+        # Import and create apps one by one to manage memory
+        for module_name, class_name in app_modules:
+            try:
+                gc.collect()  # Garbage collect before each import
+                module = __import__(module_name)
+                app_class = getattr(module, class_name)
+                app_instance = app_class(self.display, self.joystick, self.buttons)
+                apps.append(app_instance)
+            except Exception as e:
+                print(f"Failed to load {module_name}: {e}")
+        
+        # Add time sync if available
+        try:
+            import time_sync
+            apps.append(time_sync.TimeSyncApp(self.display, self.joystick, self.buttons))
+        except ImportError:
+            print("Time sync module not available")
+            
+        return apps
+        
+    def show_startup(self):
+        """Show startup screen"""
+        self.display.fill(Color.BLACK)
+        
+        # Loader and main title
+        loader = Loader(self.display)
+        loader.run()
+        
+        # Show launcher type
+        launcher_type = self.launcher_manager.get_launcher_type()
+        # Manual title case for MicroPython compatibility
+        launcher_display = launcher_type[0].upper() + launcher_type[1:] if launcher_type else ""
+        launcher_text = f"Launcher: {launcher_display}"
+        x = (240 - len(launcher_text) * 8) // 2
+        self.display.text(launcher_text, x, 200, Color.CYAN)
+        
+        self.display.display()
+        time.sleep_ms(1500)
+        
+    def show_sleep_screen(self):
+        """Show sleep screen"""
+        self.display.fill(Color.BLACK)
+        
+        msg = "SLEEPING"
+        x = (240 - len(msg) * 8) // 2
+        self.display.text(msg, x, 90, Color.WHITE)
+        
+        instruction = "Press any button"
+        x2 = (240 - len(instruction) * 8) // 2
+        self.display.text(instruction, x2, 110, Color.GRAY)
+        
+        instruction2 = "or move joystick"
+        x3 = (240 - len(instruction2) * 8) // 2
+        self.display.text(instruction2, x3, 130, Color.GRAY)
+        
+        self.display.display()
+        
+        # Turn off backlight to save power
+        if hasattr(self.display, 'backlight') and self.display.backlight:
+            self.display.backlight.value(0)
+            
+    def wake_up(self):
+        """Wake up from sleep"""
+        if hasattr(self.display, 'backlight') and self.display.backlight:
+            self.display.backlight.value(1)
+            
+        self.sleeping = False
+        self.launcher_manager.draw_screen()
+        time.sleep_ms(500)
+        
+    def handle_sleep_mode(self):
+        """Handle input during sleep mode"""
+        # Check each button individually
+        if self.buttons.is_held('A'):
+            self.wake_up()
+            return
+        if self.buttons.is_held('B'):
+            self.wake_up()
+            return
+        if self.buttons.is_held('X'):
+            self.wake_up()
+            return
+        if self.buttons.is_held('Y'):
+            self.wake_up()
+            return
+            
+        # Check joystick
+        if not self.joystick.up_pin.value():
+            self.wake_up()
+            return
+        if not self.joystick.down_pin.value():
+            self.wake_up()
+            return
+        if not self.joystick.left_pin.value():
+            self.wake_up()
+            return
+        if not self.joystick.right_pin.value():
+            self.wake_up()
+            return
+        if not self.joystick.center_pin.value():
+            self.wake_up()
+            return
+            
+    def show_goodbye(self):
+        """Show goodbye screen"""
+        self.display.fill(Color.BLACK)
+        
+        msg = "GOODBYE"
+        x = (240 - len(msg) * 8) // 2
+        self.display.text(msg, x, 100, Color.WHITE)
+        
+        msg2 = "Shutting down..."
+        x2 = (240 - len(msg2) * 8) // 2
+        self.display.text(msg2, x2, 120, Color.GRAY)
+        
+        self.display.display()
+        time.sleep_ms(1000)
+        
+        # Turn off display
+        self.display.fill(Color.BLACK)
+        self.display.display()
+        if hasattr(self.display, 'backlight') and self.display.backlight:
+            self.display.backlight.value(0)
+            
+    def run(self):
+        """Main application loop"""
+        self.launcher_manager.init()
+        
+        while self.running:
+            try:
+                if self.sleeping:
+                    self.handle_sleep_mode()
+                elif self.in_app:
+                    # Handle app execution
+                    if not self.current_app.update():
+                        # App wants to exit
+                        self.in_app = False
+                        self.current_app.cleanup()
+                        self.current_app = None
+                        self.launcher_manager.init()
+                        gc.collect()
+                else:
+                    # Handle launcher
+                    result = self.launcher_manager.handle_input()
+                    
+                    if result == "exit":
+                        self.show_goodbye()
+                        self.running = False
+                    elif result == "sleep":
+                        self.sleeping = True
+                        self.show_sleep_screen()
+                    elif isinstance(result, tuple) and result[0] == "launch_app":
+                        # Launch the selected app
+                        app = result[1]
+                        self.current_app = app
+                        self.in_app = True
+                        app.init()
+                    
+                time.sleep_ms(10)  # Small delay to prevent excessive CPU usage
+                
+            except Exception as e:
+                print(f"Error in main loop: {e}")
+                import sys
+                sys.print_exception(e)
+                # Try to recover
+                self.in_app = False
+                self.current_app = None
+                self.launcher_manager.init()
+                time.sleep_ms(1000)
+
+# Application entry point
+if __name__ == "__main__":
+    print("Starting Modular Launcher System...")
+    app = MainApp()
+    app.run()
