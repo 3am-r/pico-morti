@@ -23,8 +23,9 @@ TARGET_HARDWARE = load_target_hardware()
 SUPPORTED_HARDWARE = [
     "WAVESHARE_1_3",  # Waveshare Pico-LCD-1.3 (240x240)
     "GEEKPI_3_5",     # GeeekPi GPIO Module with 3.5" display (320x480)
+    "WAVESHARE_ESP32_S3_AMOLED",  # ESP32-S3-Touch-AMOLED-2.06 watch (410x502)
     # Add more hardware configurations here as needed
-    # "CUSTOM_BOARD", 
+    # "CUSTOM_BOARD",
     # "ANOTHER_DISPLAY",
 ]
 
@@ -65,6 +66,28 @@ def get_hardware_config():
             "BATTERY": hw.BATTERY,
             "CAPABILITIES": hw.CAPABILITIES,
             "PERFORMANCE": hw.PERFORMANCE
+        }
+    elif TARGET_HARDWARE == "WAVESHARE_ESP32_S3_AMOLED":
+        # Import ESP32-S3 AMOLED watch configuration
+        import waveshare_esp32_s3_amoled as hw
+        config = hw.get_hardware_config()
+        # Ensure all required keys are present
+        return {
+            "DEVICE_NAME": config["DEVICE_NAME"],
+            "DEVICE_ID": config["DEVICE_TYPE"],
+            "JOYSTICK": config["JOYSTICK"],
+            "BUTTONS": config["BUTTONS"],
+            "SPI": config.get("SPI", {}),
+            "DISPLAY": config["DISPLAY"],
+            "TOUCH": config["TOUCH"],
+            "IMU": config.get("IMU"),
+            "RTC": config.get("RTC"),
+            "POWER": config.get("POWER"),
+            "STORAGE": config.get("STORAGE"),
+            "WIRELESS": config.get("WIRELESS"),
+            "BATTERY": {"ENABLED": True, "VOLTAGE": 3.7, "ADC_PIN": None},
+            "CAPABILITIES": config.get("WATCH_FEATURES", {}),
+            "PERFORMANCE": config["PERFORMANCE"]
         }
     else:
         raise ValueError(f"Unsupported hardware target: {TARGET_HARDWARE}")

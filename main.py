@@ -72,6 +72,8 @@ class MainApp:
             from lib.st7789 import ST7789 as DisplayDriver, Color
         elif driver_name == "st7796":
             from lib.st7796 import ST7796 as DisplayDriver, Color
+        elif driver_name == "CO5300":
+            from lib.co5300_amoled import CO5300_AMOLED as DisplayDriver, AMOLEDColor as Color
         else:
             raise ValueError(f"Unsupported display driver: {driver_name}")
         
@@ -97,9 +99,35 @@ class MainApp:
         builtins.Color = Color
         
         # Initialize input devices
-        self.joystick = Joystick()
-        
-        self.buttons = Buttons()
+        # Check if device has touch support
+        if hw_config.get("TOUCH") and hw_config["TOUCH"].get("ENABLED"):
+            # Initialize touch controller for watch-style devices
+            from machine import I2C
+            from lib.ft3168_touch import FT3168Touch, TouchButtons
+
+            touch_config = hw_config["TOUCH"]
+            i2c = I2C(0,
+                      sda=Pin(touch_config["I2C_SDA"]),
+                      scl=Pin(touch_config["I2C_SCL"]),
+                      freq=touch_config["I2C_FREQ"])
+
+            self.touch_controller = FT3168Touch(
+                i2c=i2c,
+                address=touch_config["I2C_ADDR"],
+                width=display_config["WIDTH"],
+                height=display_config["HEIGHT"],
+                int_pin=touch_config.get("INT_PIN"),
+                rst_pin=touch_config.get("RST_PIN")
+            )
+
+            # Create virtual joystick and buttons from touch
+            from lib.touch_joystick import TouchJoystick
+            self.joystick = TouchJoystick(self.touch_controller)
+            self.buttons = TouchButtons(self.touch_controller)
+        else:
+            # Traditional hardware buttons and joystick
+            self.joystick = Joystick()
+            self.buttons = Buttons()
         
         # Initialize apps
         self.apps = self.create_apps()
