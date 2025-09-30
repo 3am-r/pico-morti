@@ -132,6 +132,9 @@ class MainApp:
             ('win_logger', 'WinLogger'),
             ('worry_box', 'WorryBox'),
             ('med_tracker', 'MedTracker'),
+            ('questbits', 'QuestBits'),
+            ('scars_stars', 'ScarsStars'),
+            ('breath', 'Breath'),
             ('pet', 'XPet'),
             ('air_monkey', 'AirMonkey'),
             ('elemental', 'ElementalSandbox'),
@@ -218,34 +221,29 @@ class MainApp:
         
     def handle_sleep_mode(self):
         """Handle input during sleep mode"""
-        # Check each button individually
-        if self.buttons.is_held('A'):
+        # Update button states
+        self.buttons.update()
+
+        # Check each button individually with is_pressed (debounced)
+        if self.buttons.is_pressed('A'):
             self.wake_up()
             return
-        if self.buttons.is_held('B'):
+        if self.buttons.is_pressed('B'):
             self.wake_up()
             return
-        if self.buttons.is_held('X'):
+        if self.buttons.is_pressed('X'):
             self.wake_up()
             return
-        if self.buttons.is_held('Y'):
+        if self.buttons.is_pressed('Y'):
             self.wake_up()
             return
             
-        # Check joystick
-        if not self.joystick.up_pin.value():
-            self.wake_up()
-            return
-        if not self.joystick.down_pin.value():
-            self.wake_up()
-            return
-        if not self.joystick.left_pin.value():
-            self.wake_up()
-            return
-        if not self.joystick.right_pin.value():
-            self.wake_up()
-            return
-        if not self.joystick.center_pin.value():
+        # Check joystick (any movement wakes up)
+        if (not self.joystick.up_pin.value() or
+            not self.joystick.down_pin.value() or
+            not self.joystick.left_pin.value() or
+            not self.joystick.right_pin.value() or
+            not self.joystick.center_pin.value()):
             self.wake_up()
             return
             
@@ -279,6 +277,7 @@ class MainApp:
             try:
                 if self.sleeping:
                     self.handle_sleep_mode()
+                    time.sleep_ms(50)  # Reduce CPU usage during sleep
                 elif self.in_app:
                     # Handle app execution
                     if not self.current_app.update():
@@ -298,6 +297,9 @@ class MainApp:
                     elif result == "sleep":
                         self.sleeping = True
                         self.show_sleep_screen()
+                        # Clear any pending button states to prevent immediate wake
+                        self.buttons.update()
+                        time.sleep_ms(300)  # Brief delay to prevent immediate wake
                     elif isinstance(result, tuple) and result[0] == "launch_app":
                         # Launch the selected app
                         app = result[1]

@@ -52,7 +52,7 @@ class ActivityTracker:
         self.today_data = {}
         
         try:
-            with open("tracker.dat", "r") as f:
+            with open("/stores/tracker.dat", "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     parts = line.strip().split(",")
@@ -70,7 +70,7 @@ class ActivityTracker:
         # Read existing data
         all_data = []
         try:
-            with open("tracker.dat", "r") as f:
+            with open("/stores/tracker.dat", "r") as f:
                 for line in f:
                     parts = line.strip().split(",")
                     # Skip today's data (we'll write new)
@@ -85,7 +85,7 @@ class ActivityTracker:
             
         # Write all data
         try:
-            with open("tracker.dat", "w") as f:
+            with open("/stores/tracker.dat", "w") as f:
                 for line in all_data:
                     f.write(line + "\n")
         except Exception as e:
@@ -232,7 +232,7 @@ class ActivityTracker:
         stats = {}
         
         try:
-            with open("tracker.dat", "r") as f:
+            with open("/stores/tracker.dat", "r") as f:
                 data = {}
                 for line in f:
                     parts = line.strip().split(",")

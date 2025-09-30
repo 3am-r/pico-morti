@@ -17,7 +17,7 @@ class Settings:
         self.buttons = buttons
         
         # App state
-        self.view_mode = "main"  # "main", "clock", "timezone", "wifi", "keyboard"
+        self.view_mode = "main"  # "main", "clock", "timezone", "wifi", "keyboard", "fidget", "launcher", "battery"
         self.selected_option = 0
         
         # Clock settings
@@ -58,6 +58,11 @@ class Settings:
         # Battery monitor
         self.battery_monitor = None
         self.init_battery_monitor()
+
+        # Fidget profile settings
+        self.fidget_profiles = ["calm", "neutral", "zesty"]
+        self.selected_fidget_profile = 1  # Default to neutral
+        self.load_fidget_profile()
         
     def init_battery_monitor(self):
         """Initialize battery monitor using hardware configuration"""
@@ -233,6 +238,8 @@ class Settings:
             self.draw_keyboard()
         elif self.view_mode == "battery":
             self.draw_battery_view()
+        elif self.view_mode == "fidget":
+            self.draw_fidget_settings()
             
         self.display.display()
         
@@ -247,6 +254,7 @@ class Settings:
             ("Clock & Date", Color.GREEN),
             ("Timezone", Color.YELLOW),
             ("WiFi Setup", Color.BLUE),
+            ("Fidget Profile", Color.CYAN),
             ("Battery Info", Color.ORANGE),
             ("System Info", Color.PURPLE)
         ]
@@ -869,7 +877,104 @@ class Settings:
             self.display.display()
             time.sleep_ms(1500)
             return False
-            
+
+    def load_fidget_profile(self):
+        """Load saved fidget profile preference"""
+        try:
+            import json
+            with open("/stores/prefs.json", "r") as f:
+                prefs = json.load(f)
+                profile = prefs.get("fidget_profile", "neutral")
+                if profile in self.fidget_profiles:
+                    self.selected_fidget_profile = self.fidget_profiles.index(profile)
+        except:
+            self.selected_fidget_profile = 1  # Default to neutral
+
+    def save_fidget_profile(self):
+        """Save fidget profile preference"""
+        try:
+            import json
+            # Load existing prefs
+            try:
+                with open("/stores/prefs.json", "r") as f:
+                    prefs = json.load(f)
+            except:
+                prefs = {}
+
+            # Update fidget profile
+            prefs["fidget_profile"] = self.fidget_profiles[self.selected_fidget_profile]
+
+            # Save back
+            with open("/stores/prefs.json", "w") as f:
+                json.dump(prefs, f)
+            return True
+        except Exception as e:
+            print(f"Failed to save fidget profile: {e}")
+            return False
+
+    def draw_fidget_settings(self):
+        """Draw fidget profile settings"""
+        self.display.fill(Color.BLACK)
+
+        # Title
+        self.display.text("FIDGET PROFILE", 65, 10, Color.CYAN)
+
+        # Profile descriptions
+        profiles_info = [
+            ("Calm", "Gentle, slow animations", Color.BLUE),
+            ("Neutral", "Balanced responsiveness", Color.GREEN),
+            ("Zesty", "Fast, energetic feedback", Color.RED)
+        ]
+
+        y_start = 50
+        for i, (name, desc, color) in enumerate(profiles_info):
+            y = y_start + i * 50
+
+            # Highlight selected
+            if i == self.selected_fidget_profile:
+                self.display.fill_rect(10, y - 5, 220, 40, color)
+                text_color = Color.WHITE
+                desc_color = Color.BLACK
+            else:
+                text_color = color
+                desc_color = Color.GRAY
+
+            self.display.text(name, 20, y, text_color)
+            self.display.text(desc, 20, y + 15, desc_color)
+
+        # Instructions
+        self.display.text("Joy:Select A:Apply B:Back", 35, 200, Color.GRAY)
+
+    def handle_fidget_input(self):
+        """Handle fidget settings input"""
+        # Navigate profiles
+        if self.joystick.up_pin.value() == 0:
+            self.selected_fidget_profile = max(0, self.selected_fidget_profile - 1)
+            time.sleep_ms(150)
+        elif self.joystick.down_pin.value() == 0:
+            self.selected_fidget_profile = min(2, self.selected_fidget_profile + 1)
+            time.sleep_ms(150)
+
+        # Apply selection
+        if self.buttons.is_pressed('A') or self.joystick.center_pin.value() == 0:
+            if self.save_fidget_profile():
+                # Show success
+                self.display.fill(Color.BLACK)
+                profile_name = self.fidget_profiles[self.selected_fidget_profile].capitalize()
+                self.display.text("Profile Updated!", 65, 90, Color.GREEN)
+                self.display.text(f"{profile_name} Mode", 75, 110, Color.WHITE)
+                self.display.display()
+                time.sleep_ms(1500)
+                self.view_mode = "main"
+            time.sleep_ms(200)
+
+        # Back to main
+        elif self.buttons.is_pressed('B') or self.buttons.is_pressed('X'):
+            self.view_mode = "main"
+            time.sleep_ms(200)
+
+        return "continue"
+
     def update(self):
         """Update Settings app"""
         if self.view_mode == "main":
@@ -879,7 +984,7 @@ class Settings:
                 self.selected_option = max(0, self.selected_option - 1)
                 self.draw_screen()
             elif direction == 'DOWN':
-                self.selected_option = min(5, self.selected_option + 1)
+                self.selected_option = min(6, self.selected_option + 1)
                 self.draw_screen()
                 
             # Enter selected option
@@ -889,6 +994,8 @@ class Settings:
                     self.selected_option = 0  # Reset for launcher selection
                 elif self.selected_option == 1:  # Clock
                     self.view_mode = "clock"
+                elif self.selected_option == 4:  # Fidget Profile
+                    self.view_mode = "fidget"
                     self.clock_field = 0
                     self.load_current_time()
                 elif self.selected_option == 2:  # Timezone

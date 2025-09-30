@@ -78,7 +78,7 @@ class AirMonkey:
     def load_save_data(self):
         """Load saved progress"""
         try:
-            with open("airmonkey_save.json", "r") as f:
+            with open("/stores/airmonkey_save.json", "r") as f:
                 data = json.load(f)
                 self.high_score = data.get("high_score", 0)
                 
@@ -105,7 +105,7 @@ class AirMonkey:
                     "difficulty": self.difficulty
                 }
             }
-            with open("airmonkey_save.json", "w") as f:
+            with open("/stores/airmonkey_save.json", "w") as f:
                 json.dump(save_data, f)
             self.save_available = True
         except Exception as e:
@@ -115,7 +115,7 @@ class AirMonkey:
         """Clear saved game"""
         try:
             save_data = {"high_score": self.high_score}
-            with open("airmonkey_save.json", "w") as f:
+            with open("/stores/airmonkey_save.json", "w") as f:
                 json.dump(save_data, f)
             self.save_available = False
         except:

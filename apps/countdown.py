@@ -47,7 +47,7 @@ class CountdownHub:
     def load_countdowns(self):
         """Load saved countdowns from JSON file"""
         try:
-            with open("countdowns.json", "r") as f:
+            with open("/stores/countdowns.json", "r") as f:
                 data = json.load(f)
                 self.countdowns = data.get("countdowns", [])
         except:
@@ -57,7 +57,7 @@ class CountdownHub:
         """Save countdowns to JSON file"""
         try:
             data = {"countdowns": self.countdowns}
-            with open("countdowns.json", "w") as f:
+            with open("/stores/countdowns.json", "w") as f:
                 json.dump(data, f)
         except Exception as e:
             print(f"Save error: {e}")

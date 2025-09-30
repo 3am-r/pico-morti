@@ -24,7 +24,7 @@ class MicroJournal:
         self.selected_words = []
         self.current_category = 0
         self.current_word_index = 0
-        self.csv_file = "journal.csv"
+        self.csv_file = "/stores/journal.csv"
         
     def init(self):
         """Initialize app when opened"""

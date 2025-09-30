@@ -30,7 +30,7 @@ class MedTracker:
         self.reminder_enabled = True
         
         # Data storage
-        self.data_file = "med_tracker_data.json"
+        self.data_file = "/stores/med_tracker_data.json"
         self.med_data = self.load_data()
         
         # Week days for display

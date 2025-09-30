@@ -171,6 +171,33 @@ class AppInfo:
             "intents": ["check_in"],
             "description": "Track medications",
             "icon": "💊"
+        },
+        "Breath": {
+            "display_name": "Breath Training",
+            "short_name": "Breath",
+            "color": Color.CYAN,
+            "category": "wellness",
+            "intents": ["check_in", "take_break"],
+            "description": "Guided breathing",
+            "icon": "🫁"
+        },
+        "QuestBits": {
+            "display_name": "QuestBits",
+            "short_name": "Quest",
+            "color": Color.YELLOW,
+            "category": "wellness",
+            "intents": ["get_stuff_done", "check_in"],
+            "description": "Micro-motivations",
+            "icon": "⭐"
+        },
+        "ScarsStars": {
+            "display_name": "Scars & Stars",
+            "short_name": "S&S",
+            "color": Color.PURPLE,
+            "category": "wellness",
+            "intents": ["check_in"],
+            "description": "Relationship compass",
+            "icon": "✚⭐"
         }
     }
     
@@ -182,7 +209,7 @@ class AppInfo:
             "emoji": "⚡",
             "description": "Focus & productivity",
             "color": Color.GREEN,
-            "apps": ["journal", "countdown", "tracker", "energy_dial", "settings"],
+            "apps": ["journal", "countdown", "tracker", "energy_dial", "questbits", "settings"],
             "flow": ["What's your main goal today?", "Set a timer?", "Track progress?"],
             "keywords": ["productive", "focus", "work", "goal"]
         },
@@ -192,7 +219,7 @@ class AppInfo:
             "emoji": "💭",
             "description": "Self-care & reflection",
             "color": Color.BLUE,
-            "apps": ["energy_dial", "journal", "gratitude", "worry_box", "win_logger", "med_tracker"],
+            "apps": ["energy_dial", "journal", "gratitude", "worry_box", "win_logger", "med_tracker", "questbits", "scars_stars", "breath"],
             "flow": ["How's your energy?", "Journal thoughts?", "Practice gratitude?"],
             "keywords": ["self", "care", "reflection", "mood"]
         },
@@ -202,7 +229,7 @@ class AppInfo:
             "emoji": "🎮",
             "description": "Fun & relaxation",
             "color": Color.ORANGE,
-            "apps": ["pet", "air_monkey", "elemental", "fidget_spinner", "gratitude", "world_clock"],
+            "apps": ["pet", "air_monkey", "elemental", "fidget_spinner", "gratitude", "world_clock", "breath"],
             "flow": ["Play with pet?", "Physics sandbox?", "Quick game?", "Fidget spinner?", "Relax & breathe?"],
             "keywords": ["fun", "play", "relax", "break"]
         },
@@ -228,7 +255,7 @@ class AppInfo:
         "wellness": {
             "name": "Wellness", 
             "color": Color.BLUE,
-            "apps": ["EnergyDial", "GratitudeProxy", "WinLogger", "WorryBox", "MedTracker"]
+            "apps": ["EnergyDial", "GratitudeProxy", "WinLogger", "WorryBox", "MedTracker", "QuestBits", "ScarsStars", "Breath"]
         },
         "games": {
             "name": "Games",
@@ -296,6 +323,9 @@ class AppInfo:
             "CountdownHub",
             "WorldClock",
             "MedTracker",
+            "QuestBits",
+            "ScarsStars",
+            "Breath",
             "TimeSyncApp",
             "Settings"
         ]

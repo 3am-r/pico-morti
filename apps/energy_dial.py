@@ -47,7 +47,7 @@ class EnergyDial:
     def load_data(self):
         """Load saved energy level"""
         try:
-            with open("energy_dial.dat", "r") as f:
+            with open("/stores/energy_dial.dat", "r") as f:
                 line = f.readline().strip()
                 if line:
                     parts = line.split(",")
@@ -61,7 +61,7 @@ class EnergyDial:
     def save_data(self):
         """Save current energy level"""
         try:
-            with open("energy_dial.dat", "w") as f:
+            with open("/stores/energy_dial.dat", "w") as f:
                 f.write(f"{self.energy_level},{time.ticks_ms()}\n")
         except Exception as e:
             print(f"Save error: {e}")

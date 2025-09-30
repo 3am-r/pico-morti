@@ -59,7 +59,7 @@ class GratitudeProxy:
     def load_data(self):
         """Load saved gratitude data"""
         try:
-            with open("gratitude.dat", "r") as f:
+            with open("/stores/gratitude.dat", "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     parts = line.strip().split(",")
@@ -79,7 +79,7 @@ class GratitudeProxy:
     def save_data(self):
         """Save gratitude data"""
         try:
-            with open("gratitude.dat", "w") as f:
+            with open("/stores/gratitude.dat", "w") as f:
                 # Save current day data
                 f.write(f"current,{self.current_date},{self.daily_count}\n")
                 f.write(f"total,count,{self.total_count}\n")

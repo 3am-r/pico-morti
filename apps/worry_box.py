@@ -103,7 +103,7 @@ class WorryBox:
         """Load saved worry data"""
         try:
             import json
-            with open("worry_box.json", "r") as f:
+            with open("/stores/worry_box.json", "r") as f:
                 data = json.load(f)
                 self.current_worries = data.get("current_worries", [])
                 self.released_count = data.get("released_count", 0)
@@ -126,7 +126,7 @@ class WorryBox:
                 "worry_time_hour": self.worry_time_hour,
                 "last_save": time.ticks_ms()
             }
-            with open("worry_box.json", "w") as f:
+            with open("/stores/worry_box.json", "w") as f:
                 json.dump(data, f)
         except Exception as e:
             print(f"Save error: {e}")

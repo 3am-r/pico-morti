@@ -1,6 +1,6 @@
 # Device Configuration
 #WAVESHARE_1_3 #GEEKPI_3_5
-TARGET_HARDWARE=GEEKPI_3_5
+TARGET_HARDWARE=WAVESHARE_1_3
 
 # Personal Configuration
 FIRST_NAME=Amr

@@ -5,16 +5,18 @@ Dynamically loads and switches between launcher implementations
 
 from launcher_mindful import MindfulLauncher
 from launcher_standard import StandardLauncher
+from launcher_fidget import FidgetLauncher
 
 class LauncherManager:
     """Manager class that handles different launcher types"""
-    
+
     LAUNCHER_TYPES = {
         "mindful": MindfulLauncher,
-        "standard": StandardLauncher
+        "standard": StandardLauncher,
+        "fidget": FidgetLauncher
     }
     
-    def __init__(self, apps, display, joystick, buttons, launcher_type="mindful"):
+    def __init__(self, apps, display, joystick, buttons, launcher_type="standard"):
         self.apps = apps
         self.display = display
         self.joystick = joystick
@@ -29,7 +31,7 @@ class LauncherManager:
     def switch_launcher(self, launcher_type):
         """Switch to a different launcher type"""
         if launcher_type not in self.LAUNCHER_TYPES:
-            launcher_type = "mindful"  # Default fallback
+            launcher_type = "standard"  # Default fallback
             
         launcher_class = self.LAUNCHER_TYPES[launcher_type]
         self.current_launcher = launcher_class(
@@ -67,11 +69,11 @@ class LauncherManager:
         """Load launcher preference from configuration"""
         try:
             import json
-            with open("theme.json", "r") as f:
+            with open("/stores/theme.json", "r") as f:
                 theme_config = json.load(f)
-                return theme_config.get("launcher", "mindful")
+                return theme_config.get("launcher", "standard")
         except:
-            return "mindful"  # Default
+            return "standard"  # Default
             
     @staticmethod
     def save_launcher_preference(launcher_type):
@@ -80,7 +82,7 @@ class LauncherManager:
             import json
             # Load existing theme config
             try:
-                with open("theme.json", "r") as f:
+                with open("/stores/theme.json", "r") as f:
                     theme_config = json.load(f)
             except:
                 theme_config = {}
@@ -89,7 +91,7 @@ class LauncherManager:
             theme_config["launcher"] = launcher_type
             
             # Save back to file
-            with open("theme.json", "w") as f:
+            with open("/stores/theme.json", "w") as f:
                 json.dump(theme_config, f)
                 
             return True

@@ -33,6 +33,7 @@ class LauncherUtils:
             "prayers": "Prayers",
             "hijri_calendar": "HijriCalendar",
             "qibla": "QiblaCompass",
+            "breath": "Breath",
             "time_sync": "TimeSyncApp"
         }
         
@@ -69,7 +70,7 @@ class LauncherUtils:
         """Log when user selects an intent"""
         try:
             # Try to load existing analytics
-            with open("analytics.json", "r") as f:
+            with open("/stores/analytics.json", "r") as f:
                 analytics = json.load(f)
         except:
             analytics = {"intent_selections": {}, "app_usage": {}}
@@ -84,7 +85,7 @@ class LauncherUtils:
         
         # Save analytics
         try:
-            with open("analytics.json", "w") as f:
+            with open("/stores/analytics.json", "w") as f:
                 json.dump(analytics, f)
         except:
             pass  # Fail silently
@@ -94,7 +95,7 @@ class LauncherUtils:
         """Log when user opens an app"""
         try:
             # Try to load existing analytics
-            with open("analytics.json", "r") as f:
+            with open("/stores/analytics.json", "r") as f:
                 analytics = json.load(f)
         except:
             analytics = {"intent_selections": {}, "app_usage": {}}
@@ -109,7 +110,7 @@ class LauncherUtils:
         
         # Save analytics
         try:
-            with open("analytics.json", "w") as f:
+            with open("/stores/analytics.json", "w") as f:
                 json.dump(analytics, f)
         except:
             pass  # Fail silently
@@ -118,7 +119,7 @@ class LauncherUtils:
     def get_analytics():
         """Get current analytics data"""
         try:
-            with open("analytics.json", "r") as f:
+            with open("/stores/analytics.json", "r") as f:
                 return json.load(f)
         except:
             return {"intent_selections": {}, "app_usage": {}}

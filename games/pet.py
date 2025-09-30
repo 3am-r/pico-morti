@@ -76,7 +76,7 @@ class XPet:
     def load_pet(self):
         """Load saved pet data"""
         try:
-            with open("xpet.dat", "r") as f:
+            with open("/stores/xpet.dat", "r") as f:
                 lines = f.readlines()
                 if lines:
                     data = lines[0].strip().split(",")
@@ -98,7 +98,7 @@ class XPet:
     def save_pet(self):
         """Save pet data"""
         try:
-            with open("xpet.dat", "w") as f:
+            with open("/stores/xpet.dat", "w") as f:
                 data = [
                     self.pet["name"],
                     str(self.pet["age"]),

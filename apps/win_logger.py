@@ -89,7 +89,7 @@ class WinLogger:
         """Load saved win data"""
         try:
             import json
-            with open("win_logger.json", "r") as f:
+            with open("/stores/win_logger.json", "r") as f:
                 data = json.load(f)
                 self.current_date = data.get("current_date", self.current_date)
                 self.daily_wins = data.get("daily_wins", [])
@@ -102,7 +102,7 @@ class WinLogger:
     def try_migrate_old_data(self):
         """Try to migrate from simple text format"""
         try:
-            with open("win_logger.dat", "r") as f:
+            with open("/stores/win_logger.dat", "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     parts = line.strip().split(",")
@@ -126,7 +126,7 @@ class WinLogger:
                 "streak_data": self.streak_data,
                 "last_save": time.ticks_ms()
             }
-            with open("win_logger.json", "w") as f:
+            with open("/stores/win_logger.json", "w") as f:
                 json.dump(data, f)
         except Exception as e:
             print(f"Save error: {e}")

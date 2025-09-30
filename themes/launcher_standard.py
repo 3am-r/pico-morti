@@ -19,12 +19,17 @@ class StandardLauncher:
         self.joystick = joystick
         self.buttons = buttons
         
-        # Launcher state
+        # Launcher state - 5 rows x 3 columns grid
         self.current_app_index = 0
+        self.scroll_offset = 0
+        self.grid_cols = 3
+        self.grid_rows = 5
+        self.apps_per_page = self.grid_cols * self.grid_rows  # 15 apps per page
         
     def init(self):
         """Initialize standard launcher"""
         self.current_app_index = 0
+        self.scroll_offset = 0
         self.draw_screen()
         
     def draw_screen(self):
@@ -34,122 +39,181 @@ class StandardLauncher:
         self.display.display()
         
     def draw_menu(self):
-        """Draw main menu with app grid - original working layout"""
+        """Draw 5x3 grid with infinite scroll"""
         num_apps = len(self.apps)
-        
-        # Enhanced grid layout logic for better scaling (from backup)
-        if num_apps <= 6:
-            # 2x3 layout for 1-6 apps 
-            cols = 2
-            rows = 3
-            icon_width = 100
-            icon_height = 45
-            padding_x = 15
-            padding_y = 5
-        elif num_apps <= 8:
-            # 2x4 layout for 7-8 apps
-            cols = 2
-            rows = 4
-            icon_width = 75
-            icon_height = 40
-            padding_x = 12
-            padding_y = 3
-        elif num_apps <= 9:
-            # 3x3 layout for 9 apps
-            cols = 3
-            rows = 3
-            icon_width = 65
-            icon_height = 35
-            padding_x = 8
-            padding_y = 3
-        else:
-            # 3x4 layout for 10+ apps (compact)
-            cols = 3
-            rows = 4
-            icon_width = 60
-            icon_height = 30
-            padding_x = 6
-            padding_y = 2
-            
+
+        # Fixed 5 rows x 3 columns layout
+        cols = self.grid_cols
+        rows = self.grid_rows
+
+        # Calculate icon dimensions to fit 5x3 grid
+        available_width = self.display.width - 20  # 10px margin on each side
+        available_height = self.display.height - 80  # Leave room for instructions
+
+        icon_width = (available_width - (cols - 1) * 8) // cols  # 8px padding between cols
+        icon_height = (available_height - (rows - 1) * 6) // rows  # 6px padding between rows
+
+        padding_x = 8
+        padding_y = 6
+
         start_x = (self.display.width - (icon_width * cols + padding_x * (cols - 1))) // 2
-        start_y = 25
-        
-        # Get app info from centralized registry
-        app_info = AppInfo.get_app_list_for_standard_launcher()
-        
-        for i, (name, color) in enumerate(app_info):
-            if i >= num_apps:  # Don't draw more apps than we have
-                break
-                
-            row = i // cols
-            col = i % cols
+        start_y = 15
+
+        # Calculate which apps to show based on scroll offset
+        visible_start = self.scroll_offset
+        visible_end = min(visible_start + self.apps_per_page, num_apps)
+
+        # Draw visible apps in grid
+        grid_position = 0
+        for app_index in range(visible_start, visible_end):
+            if app_index < num_apps:
+                app = self.apps[app_index]
+                class_name = app.__class__.__name__
+                name = AppInfo.get_short_name(class_name)
+                color = AppInfo.get_color(class_name)
+            else:
+                name, color = ("App", Color.GRAY)
+
+            row = grid_position // cols
+            col = grid_position % cols
             x = start_x + col * (icon_width + padding_x)
             y = start_y + row * (icon_height + padding_y)
-            
+
             # Highlight selected app
-            if i == self.current_app_index:
-                self.display.fill_rect(x - 3, y - 3, icon_width + 6, icon_height + 6, Color.WHITE)
-                self.display.fill_rect(x - 1, y - 1, icon_width + 2, icon_height + 2, Color.BLACK)
-            
+            if app_index == self.current_app_index:
+                self.display.fill_rect(x - 2, y - 2, icon_width + 4, icon_height + 4, Color.WHITE)
+                self.display.fill_rect(x, y, icon_width, icon_height, Color.BLACK)
+
             # Draw app rectangle
             self.display.rect(x, y, icon_width, icon_height, color)
-            self.display.fill_rect(x + 1, y + 1, icon_width - 2, icon_height - 2, color)
-            
+            if app_index != self.current_app_index:
+                self.display.fill_rect(x + 1, y + 1, icon_width - 2, icon_height - 2, color)
+
             # Draw app name - centered in the rectangle
-            name_x = x + (icon_width - len(name) * 8) // 2
-            name_y = y + (icon_height - 8) // 2  # Center vertically in rectangle
-            self.display.text(name, name_x, name_y, Color.BLACK)
-        
-        # Instructions - positioned based on grid end
-        grid_end_y = start_y + (rows * icon_height) + ((rows - 1) * padding_y)
-        instruction_y = grid_end_y + 40  # Original spacing
-        
-        self.display.text("Joystick:Move A:Open", 30, instruction_y, Color.GRAY)
-        self.display.text("B:Sleep Hold:Exit", 60, instruction_y + 15, Color.GRAY)
-        
+            text_color = Color.WHITE if app_index == self.current_app_index else Color.BLACK
+            name_len = min(len(name), icon_width // 8)  # Truncate if too long
+            display_name = name[:name_len]
+            name_x = x + (icon_width - len(display_name) * 8) // 2
+            name_y = y + (icon_height - 8) // 2
+            self.display.text(display_name, name_x, name_y, text_color)
+
+            grid_position += 1
+
+        # Draw scroll indicators
+        self.draw_scroll_indicators(num_apps)
+
+        # Instructions at bottom
+        instruction_y = self.display.height - 35
+        self.display.text("Joy:Navigate A:Open B:Sleep", 15, instruction_y, Color.GRAY)
+
+        # Show page info
+        total_pages = (num_apps + self.apps_per_page - 1) // self.apps_per_page
+        current_page = (self.scroll_offset // self.apps_per_page) + 1
+        page_info = f"{current_page}/{total_pages}"
+        self.display.text(page_info, self.display.width - len(page_info) * 8 - 5, instruction_y, Color.GRAY)
+
+    def draw_scroll_indicators(self, num_apps):
+        """Draw scroll indicators on the right side"""
+        if num_apps <= self.apps_per_page:
+            return  # No scrolling needed
+
+        indicator_x = self.display.width - 10
+        indicator_height = 100
+        indicator_y = 40
+
+        # Draw scroll track
+        self.display.rect(indicator_x, indicator_y, 3, indicator_height, Color.DARK_GRAY)
+
+        # Calculate scroll thumb position and size
+        total_pages = (num_apps + self.apps_per_page - 1) // self.apps_per_page
+        current_page = self.scroll_offset // self.apps_per_page
+        thumb_height = max(5, indicator_height // total_pages)
+        thumb_y = indicator_y + (current_page * (indicator_height - thumb_height)) // (total_pages - 1) if total_pages > 1 else indicator_y
+
+        # Draw scroll thumb
+        self.display.fill_rect(indicator_x, int(thumb_y), 3, thumb_height, Color.WHITE)
+
+        # Draw up/down arrows if there's more content
+        if self.scroll_offset > 0:
+            # Up arrow
+            self.display.text("^", indicator_x - 5, indicator_y - 15, Color.WHITE)
+
+        if self.scroll_offset + self.apps_per_page < num_apps:
+            # Down arrow
+            self.display.text("v", indicator_x - 5, indicator_y + indicator_height + 5, Color.WHITE)
+
     def handle_input(self):
         """Handle input in standard launcher"""
         # Update input devices
         self.buttons.update()
         
-        # Enhanced joystick navigation - adaptive for current layout
+        # 5x3 grid navigation with infinite scroll
         moved = False
         num_apps = len(self.apps)
-        
-        # Determine current grid layout (same logic as draw_menu)
-        if num_apps <= 6:
-            cols = 2
-        elif num_apps <= 8:
-            cols = 2
-        elif num_apps <= 9:
-            cols = 3
-        else:
-            cols = 3
-        
-        # Universal navigation that works for any grid layout (from backup)
+        cols = self.grid_cols
+
+        # Calculate current position in grid
+        current_grid_pos = self.current_app_index - self.scroll_offset
+        current_row = current_grid_pos // cols
+        current_col = current_grid_pos % cols
+
+        # Navigation logic
         if not self.joystick.right_pin.value() and not moved:
-            if self.current_app_index % cols < cols - 1:  # Not in rightmost column
-                if self.current_app_index < num_apps - 1:  # Not the last app
+            if current_col < cols - 1:  # Can move right within current row
+                if self.current_app_index < num_apps - 1:
                     self.current_app_index += 1
                     moved = True
+            else:  # At rightmost column, wrap to next row
+                if self.current_app_index < num_apps - 1:
+                    self.current_app_index += 1
+                    if self.current_app_index >= self.scroll_offset + self.apps_per_page:
+                        self.scroll_offset += self.grid_cols  # Scroll to next row
+                    moved = True
+
         elif not self.joystick.left_pin.value() and not moved:
-            if self.current_app_index % cols > 0:  # Not in leftmost column
+            if current_col > 0:  # Can move left within current row
                 self.current_app_index -= 1
                 moved = True
+            else:  # At leftmost column, wrap to previous row
+                if self.current_app_index > 0:
+                    self.current_app_index -= 1
+                    if self.current_app_index < self.scroll_offset:
+                        self.scroll_offset -= self.grid_cols  # Scroll to previous row
+                    moved = True
+
         elif not self.joystick.down_pin.value() and not moved:
-            if self.current_app_index < num_apps - cols:  # Not in bottom row
+            if self.current_app_index + cols < num_apps:  # Can move down
                 self.current_app_index += cols
+                if self.current_app_index >= self.scroll_offset + self.apps_per_page:
+                    self.scroll_offset += cols  # Scroll down
                 moved = True
+            else:  # Wrap to top (infinite scroll)
+                self.current_app_index = self.current_app_index % cols  # Same column, first row
+                self.scroll_offset = 0
+                moved = True
+
         elif not self.joystick.up_pin.value() and not moved:
-            if self.current_app_index >= cols:  # Not in top row
+            if self.current_app_index >= cols:  # Can move up
                 self.current_app_index -= cols
+                if self.current_app_index < self.scroll_offset:
+                    self.scroll_offset -= cols  # Scroll up
                 moved = True
-        
+            else:  # Wrap to bottom (infinite scroll)
+                # Find last row with apps in same column
+                target_col = self.current_app_index % cols
+                last_full_row = ((num_apps - 1) // cols) * cols
+                self.current_app_index = min(last_full_row + target_col, num_apps - 1)
+                # Scroll to show the bottom
+                self.scroll_offset = max(0, self.current_app_index - self.apps_per_page + cols)
+                moved = True
+
+        # Ensure scroll offset is valid
+        max_scroll = max(0, num_apps - self.apps_per_page)
+        self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
+
         if moved:
-            # Keep index in bounds for current number of apps
-            self.current_app_index = max(0, min(num_apps - 1, self.current_app_index))
             self.draw_screen()
-            time.sleep_ms(150)  # Simple debounce after movement
+            time.sleep_ms(150)  # Debounce
             
         # Button A - Open app
         if self.buttons.is_pressed('A'):

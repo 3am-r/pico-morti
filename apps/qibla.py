@@ -26,7 +26,7 @@ class QiblaCompass:
     def load_location(self):
         """Load location from settings file"""
         try:
-            with open('settings.json', 'r') as f:
+            with open('/stores/settings.json', 'r') as f:
                 import json
                 settings = json.load(f)
                 if 'latitude' in settings and 'longitude' in settings:
