@@ -74,6 +74,8 @@ class MainApp:
             from lib.st7796 import ST7796 as DisplayDriver, Color
         elif driver_name == "CO5300":
             from lib.co5300_amoled import CO5300_AMOLED as DisplayDriver, AMOLEDColor as Color
+        elif driver_name == "ili9488":
+            from lib.ili9488 import ILI9488 as DisplayDriver, Color
         else:
             raise ValueError(f"Unsupported display driver: {driver_name}")
         
@@ -99,8 +101,26 @@ class MainApp:
         builtins.Color = Color
         
         # Initialize input devices
+        # Check if device has keyboard support (PicoCalc)
+        if hw_config.get("KEYBOARD") and hw_config["KEYBOARD"].get("ENABLED"):
+            # Initialize STM32 keyboard controller
+            from machine import I2C
+            from lib.stm32_keyboard import STM32Keyboard, KeyboardButtons, KeyboardJoystick
+
+            keyboard_config = hw_config["KEYBOARD"]
+            i2c = I2C(0,
+                      sda=Pin(keyboard_config["I2C_SDA"]),
+                      scl=Pin(keyboard_config["I2C_SCL"]),
+                      freq=keyboard_config["I2C_FREQ"])
+
+            self.keyboard = STM32Keyboard(i2c, address=keyboard_config["I2C_ADDR"])
+
+            # Create virtual joystick and buttons from keyboard
+            self.joystick = KeyboardJoystick(self.keyboard)
+            self.buttons = KeyboardButtons(self.keyboard)
+
         # Check if device has touch support
-        if hw_config.get("TOUCH") and hw_config["TOUCH"].get("ENABLED"):
+        elif hw_config.get("TOUCH") and hw_config["TOUCH"].get("ENABLED"):
             # Initialize touch controller for watch-style devices
             from machine import I2C
             from lib.ft3168_touch import FT3168Touch, TouchButtons

@@ -24,6 +24,7 @@ SUPPORTED_HARDWARE = [
     "WAVESHARE_1_3",  # Waveshare Pico-LCD-1.3 (240x240)
     "GEEKPI_3_5",     # GeeekPi GPIO Module with 3.5" display (320x480)
     "WAVESHARE_ESP32_S3_AMOLED",  # ESP32-S3-Touch-AMOLED-2.06 watch (410x502)
+    "PICOCALC",       # PicoCalc handheld with 4" 320x320 IPS, QWERTY keyboard
     # Add more hardware configurations here as needed
     # "CUSTOM_BOARD",
     # "ANOTHER_DISPLAY",
@@ -87,6 +88,28 @@ def get_hardware_config():
             "WIRELESS": config.get("WIRELESS"),
             "BATTERY": {"ENABLED": True, "VOLTAGE": 3.7, "ADC_PIN": None},
             "CAPABILITIES": config.get("WATCH_FEATURES", {}),
+            "PERFORMANCE": config["PERFORMANCE"]
+        }
+    elif TARGET_HARDWARE == "PICOCALC":
+        # Import PicoCalc handheld configuration
+        import picocalc_handheld as hw
+        config = hw.get_hardware_config()
+        return {
+            "DEVICE_NAME": config["DEVICE_NAME"],
+            "DEVICE_ID": config["DEVICE_TYPE"],
+            "JOYSTICK": config["JOYSTICK"],
+            "BUTTONS": config["BUTTONS"],
+            "SPI": config["SPI"],
+            "DISPLAY": config["DISPLAY"],
+            "KEYBOARD": config["KEYBOARD"],
+            "AUDIO": config.get("AUDIO"),
+            "STORAGE": config.get("STORAGE"),
+            "POWER": config.get("POWER"),
+            "GPIO": config.get("GPIO"),
+            "USB": config.get("USB"),
+            "LED": config.get("LED"),
+            "BATTERY": config["POWER"]["BATTERY"] if config.get("POWER") else {"ENABLED": False},
+            "CAPABILITIES": config["CAPABILITIES"],
             "PERFORMANCE": config["PERFORMANCE"]
         }
     else:
