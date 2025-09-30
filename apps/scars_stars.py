@@ -231,8 +231,8 @@ class ScarsStars:
             self.display.text(values_text, 10, 190, Color.PURPLE)
 
         # Controls
-        controls = "↑↓:Select A:Enter B:Stealth" if not self.stealth_mode else "↑↓ A:Go B:Exit"
-        self.display.text(controls, 20, 220, Color.GRAY)
+        controls = "↑↓:Select A:Enter B:Exit Y:Stealth" if not self.stealth_mode else "↑↓ A:Go B:Exit Y:Exit Stealth"
+        self.display.text(controls, 5, 220, Color.GRAY)
 
     def draw_quick_log_screen(self):
         """Draw quick log interaction screen"""
@@ -754,12 +754,12 @@ class ScarsStars:
 
         if self.current_mode == "home":
             # Home navigation
-            if self.buttons.is_pressed('UP'):
+            if not self.joystick.up_pin.value():
                 self.selected_index = (self.selected_index - 1) % 5
                 self.draw_screen()
                 time.sleep_ms(150)
 
-            elif self.buttons.is_pressed('DOWN'):
+            elif not self.joystick.down_pin.value():
                 self.selected_index = (self.selected_index + 1) % 5
                 self.draw_screen()
                 time.sleep_ms(150)
@@ -782,6 +782,10 @@ class ScarsStars:
                 time.sleep_ms(200)
 
             elif self.buttons.is_pressed('B'):
+                # Exit app
+                return False
+
+            elif self.buttons.is_pressed('Y'):
                 # Toggle stealth mode
                 self.stealth_mode = not self.stealth_mode
                 if self.stealth_mode:
@@ -874,7 +878,7 @@ class ScarsStars:
             time.sleep_ms(200)
 
         # Navigation within current step
-        elif self.buttons.is_pressed('UP'):
+        elif not self.joystick.up_pin.value():
             if self.log_step == 0:
                 self.selected_index = (self.selected_index - 1) % len(self.people)
             elif self.log_step == 1:
@@ -890,7 +894,7 @@ class ScarsStars:
             self.draw_screen()
             time.sleep_ms(150)
 
-        elif self.buttons.is_pressed('DOWN'):
+        elif not self.joystick.down_pin.value():
             if self.log_step == 0:
                 self.selected_index = (self.selected_index + 1) % len(self.people)
             elif self.log_step == 1:
@@ -963,7 +967,7 @@ class ScarsStars:
             time.sleep_ms(200)
 
         # Navigation
-        elif self.buttons.is_pressed('UP'):
+        elif not self.joystick.up_pin.value():
             if self.log_step == 0:
                 self.selected_index = (self.selected_index - 1) % len(self.people)
             elif self.log_step == 1:
@@ -982,7 +986,7 @@ class ScarsStars:
             self.draw_screen()
             time.sleep_ms(150)
 
-        elif self.buttons.is_pressed('DOWN'):
+        elif not self.joystick.down_pin.value():
             if self.log_step == 0:
                 self.selected_index = (self.selected_index + 1) % len(self.people)
             elif self.log_step == 1:
@@ -1018,12 +1022,12 @@ class ScarsStars:
             self.draw_screen()
             time.sleep_ms(200)
 
-        elif self.buttons.is_pressed('UP'):
+        elif not self.joystick.up_pin.value():
             self.selected_index = (self.selected_index - 1) % len(self.repair_types)
             self.draw_screen()
             time.sleep_ms(150)
 
-        elif self.buttons.is_pressed('DOWN'):
+        elif not self.joystick.down_pin.value():
             self.selected_index = (self.selected_index + 1) % len(self.repair_types)
             self.draw_screen()
             time.sleep_ms(150)
